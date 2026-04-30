@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# Firebase CLI artifacts (per-project caches and logs)
+.firebase/
+firebase-debug.log*
+firebase-debug.*.log*
+.firebaserc.backup
