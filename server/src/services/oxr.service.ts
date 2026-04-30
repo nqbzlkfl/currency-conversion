@@ -1,5 +1,5 @@
 import { loadEnv } from '@/config/env';
-import { cache } from './cache.service';
+import { cache } from '@/services/cache.service';
 import { ApiError } from '@/utils/ApiError';
 import { logger } from '@/utils/logger';
 import {

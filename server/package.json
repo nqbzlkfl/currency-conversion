@@ -7,7 +7,9 @@
     "dev": "npm run dev:local",
     "dev:local": "APP_ENV=local dotenv -e env/.env.local -- tsx watch src/server.ts",
     "dev:preprod": "APP_ENV=preprod dotenv -e env/.env.preprod -- tsx watch src/server.ts",
-    "build": "tsc --noEmit",
+    "build": "tsc && tsc-alias --resolve-full-paths",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/server.js",
     "start:local": "APP_ENV=local dotenv -e env/.env.local -- tsx src/server.ts",
     "start:preprod": "APP_ENV=preprod dotenv -e env/.env.preprod -- tsx src/server.ts",
     "start:prod": "APP_ENV=prod dotenv -e env/.env.prod -- tsx src/server.ts",
@@ -26,6 +28,7 @@
     "@types/supertest": "^6.0.2",
     "dotenv-cli": "^7.4.2",
     "supertest": "^7.0.0",
+    "tsc-alias": "^1.8.10",
     "tsx": "^4.16.0",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"

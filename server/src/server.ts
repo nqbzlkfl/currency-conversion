@@ -1,6 +1,6 @@
-import { createApp } from './app';
-import { loadEnv } from './config/env';
-import { logger } from './utils/logger';
+import { createApp } from '@/app';
+import { loadEnv } from '@/config/env';
+import { logger } from '@/utils/logger';
 
 function bootstrap(): void {
   let env;

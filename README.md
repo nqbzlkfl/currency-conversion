@@ -17,7 +17,7 @@ A single-purpose currency converter web app: pick two currencies, type an amount
 5. [Test Coverage](#5-test-coverage)
 6. [CI / Build Pipeline](#6-ci--build-pipeline)
 7. [Postman Collection](#7-postman-collection)
-8. [Optional: Docker Setup](#8-optional-docker-setup)
+8. [Docker (Backend Only)](#8-docker-backend-only)
 9. [Architecture & Design Docs](#9-architecture--design-docs)
 10. [AI Prompt Log](#10-ai-prompt-log)
 11. [Troubleshooting](#11-troubleshooting)
@@ -337,118 +337,99 @@ A Postman collection is included at `postman_collection.json` covering all 4 end
 
 ---
 
-## 8. Optional: Docker Setup
+## 8. Docker (Backend Only)
 
-Docker is **not** required to run this project — the native flow in §1 is the primary supported path. Use Docker only if you prefer a one-command containerised startup.
+The backend ships as a Docker container — the **same image runs locally and on Cloud Run**. The frontend does not need Docker because it deploys as static files to a CDN (see §8.2).
 
-The architecture is documented in [`docs/setup/03-setup-and-docker.md`](docs/setup/03-setup-and-docker.md). To enable Docker, follow these steps:
+### 8.1 Backend Dockerfile
 
-### Step 1 — Create `server/Dockerfile`
+A multi-stage build that compiles TypeScript with `tsc + tsc-alias` (resolves `@/*` aliases and adds `.js` extensions for ESM), then runs `node dist/server.js` in a minimal runtime stage.
 
+`server/Dockerfile`:
 ```dockerfile
-FROM node:22-alpine
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --omit=dev && npm install tsx
-
-COPY tsconfig.json ./
-COPY src ./src
-
-ENV NODE_ENV=production
-EXPOSE 8800
-CMD ["npx", "tsx", "src/server.ts"]
-```
-
-### Step 2 — Create `client/Dockerfile`
-
-```dockerfile
-# Build stage
+# ---- build stage ----
 FROM node:22-alpine AS build
 WORKDIR /app
+
+# Install dependencies first for better layer caching
 COPY package*.json ./
 RUN npm ci
-COPY tsconfig.json vite.config.ts index.html ./
+
+# Copy source and tsconfig, then compile to ./dist
+COPY tsconfig.json ./
 COPY src ./src
-COPY public ./public
-RUN npm run build:prod
+RUN npm run build
 
-# Runtime stage
-FROM nginx:1.27-alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+# ---- runtime stage ----
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Install only production dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copy compiled output from build stage
+COPY --from=build /app/dist ./dist
+
+# Cloud Run injects PORT at runtime; default to 8080 for local docker run
+ENV PORT=8080
+EXPOSE 8080
+
+CMD ["node", "dist/server.js"]
 ```
 
-### Step 3 — Create `client/nginx.conf`
-
-```nginx
-server {
-  listen 80;
-  server_name _;
-  root /usr/share/nginx/html;
-
-  location / {
-    try_files $uri $uri/ /index.html;
-  }
-
-  location /api/ {
-    proxy_pass http://server:8800/api/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-  }
-}
+`server/.dockerignore`:
+```
+node_modules
+dist
+coverage
+tests
+env
+*.log
+.DS_Store
+.gitignore
+.nvmrc
+.env*
+Dockerfile
+.dockerignore
 ```
 
-### Step 4 — Create root `docker-compose.yml`
+### 8.2 Test the container locally
 
-```yaml
-services:
-  server:
-    build: ./server
-    container_name: cc-server
-    environment:
-      - APP_ENV=prod
-      - PORT=8800
-      - OXR_APP_ID=${OXR_APP_ID}
-      - OXR_BASE_URL=https://openexchangerates.org/api
-      - RATES_TTL_MS=3600000
-      - CURRENCIES_TTL_MS=86400000
-      - CORS_ORIGIN=*
-      - LOG_LEVEL=info
-    expose:
-      - "8800"
-    restart: unless-stopped
-
-  client:
-    build: ./client
-    container_name: cc-client
-    ports:
-      - "8080:80"
-    depends_on:
-      - server
-    restart: unless-stopped
-```
-
-### Step 5 — Create `.env` at repo root
-
-```
-OXR_APP_ID=aa141bebf0c24253a6a89a9f9591c0d9
-```
-
-### Step 6 — Run
+The backend container listens on port `8080` (Cloud Run convention). Native dev (`npm run dev`) still uses `8800` — see §1. The container is environment-agnostic: env vars are passed at runtime via `-e` flags or Cloud Run service config, never baked into the image.
 
 ```bash
-docker compose up --build      # build & start
-# open http://localhost:8080
+cd server
 
-docker compose logs -f server  # tail backend logs
-docker compose down            # stop & remove
+# Build the image
+docker build -t currency-converter-server .
+
+# Run it (replace OXR_APP_ID with your own for production)
+docker run --rm -p 8080:8080 \
+  -e OXR_APP_ID=aa141bebf0c24253a6a89a9f9591c0d9 \
+  currency-converter-server
+
+# In another terminal — verify it's healthy
+curl http://localhost:8080/api/health
+# → { "status": "ok", "uptime": ... }
+
+curl "http://localhost:8080/api/convert?from=USD&to=SGD&amount=1000"
+# → { "from":"USD", "to":"SGD", "result":1360, "rate":1.36, ... }
 ```
 
-**Notes:**
-- The backend port (8800) is **not** published to the host — only the nginx-served frontend on `8080`. Backend reachable only via the docker network.
-- For dev with hot reload, use the native flow in §1, not Docker.
+To pass additional env vars (CORS origin, custom TTLs, etc.), add more `-e KEY=VALUE` flags to the `docker run` command.
+
+### 8.3 Frontend deployment (no Docker)
+
+The frontend ships as static files (`client/dist/`) to **Firebase Hosting** — a CDN-backed static host. No container, no nginx, no runtime: Firebase serves the build output directly with auto-HTTPS and global edge caching. Containerising a static SPA would add zero value for this deployment target.
+
+### 8.4 Production deployment
+
+Backend → **Google Cloud Run** (deploys this Dockerfile from GitHub via Cloud Build).
+Frontend → **Firebase Hosting** (deploys `client/dist/` after `npm run build:prod`).
+
+> Detailed deployment walkthrough: TODO.
 
 ---
 
