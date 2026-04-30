@@ -3,6 +3,19 @@
   border-radius: var(--card-border-radius);
   box-shadow: var(--card-shadow);
   position: relative;
+  transition: opacity 400ms ease;
+}
+
+/* Initial-load only: card breathes gently to communicate "data loading"
+ * without being distracting. Disables itself once data arrives — the
+ * transition: opacity above smooths the return to full opacity. */
+.cardLoading {
+  animation: cardBreathe 1.6s ease-in-out infinite;
+}
+
+@keyframes cardBreathe {
+  0%, 100% { opacity: 0.65; }
+  50%      { opacity: 0.85; }
 }
 
 .fadingContent {

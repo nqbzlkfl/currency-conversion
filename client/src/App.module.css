@@ -23,6 +23,27 @@
   line-height: var(--line-height-body);
 }
 
+/* Initial-load only: appends an animated "..." after the subtitle text
+ * to signal "rates are loading" without changing layout height.
+ * Each dot fades in 400ms apart, then the cycle repeats every 1.4s. */
+.subtitleLoading::after {
+  content: '...';
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+  letter-spacing: 0.08em;
+  animation: subtitleDots 1.4s steps(4, end) infinite;
+  margin-left: 2px;
+}
+
+@keyframes subtitleDots {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+  100% { content: ''; }
+}
+
 /* Tablet & desktop: vertically center the card on the viewport.
  * Mobile retains the top-aligned layout. */
 @media (min-width: 768px) {

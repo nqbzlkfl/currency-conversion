@@ -9,6 +9,7 @@ type ConverterCardProps = {
   amountDisplay: string;
   resultDisplay: string;
   isSwapping?: boolean;
+  isInitialLoad?: boolean;
   isFromDropdownOpen?: boolean;
   isToDropdownOpen?: boolean;
   onAmountChange?: (display: string, numeric: number) => void;
@@ -28,6 +29,7 @@ export function ConverterCard({
   amountDisplay,
   resultDisplay,
   isSwapping = false,
+  isInitialLoad = false,
   isFromDropdownOpen = false,
   isToDropdownOpen = false,
   onAmountChange,
@@ -37,8 +39,9 @@ export function ConverterCard({
   fromDropdownSlot,
   toDropdownSlot,
 }: ConverterCardProps) {
+  const cardClass = `${styles.card} ${isInitialLoad ? styles.cardLoading : ''}`;
   return (
-    <section className={styles.card} aria-label="Currency conversion">
+    <section className={cardClass} aria-label="Currency conversion" aria-busy={isInitialLoad}>
       <CurrencyRow
         label={FROM_LABEL}
         currencyCode={fromCurrency}

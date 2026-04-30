@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ConverterCard } from '@/components/ConverterCard';
 import { CurrencyDropdown } from '@/components/CurrencyDropdown';
 import { RateDisplay } from '@/components/RateDisplay';
@@ -14,6 +14,7 @@ import styles from './App.module.css';
 const PAGE_TITLE = 'Currency Converter';
 const PAGE_SUBTITLE =
   'Check live rates, set rate alerts, receive notifications and more.';
+const PAGE_SUBTITLE_LOADING = 'Loading latest rates';
 const CURRENCIES_ERROR_FALLBACK = 'Unable to load currencies. Please refresh.';
 const EMPTY_RESULT_DISPLAY = '';
 
@@ -61,6 +62,25 @@ export function App() {
   const isCurrenciesReady = currenciesQuery.status === 'success';
   const showCurrenciesError = currenciesQuery.status === 'error';
 
+  // Sticky one-shot: true only until the very first successful currencies +
+  // convert load. Subsequent slow requests do not re-trigger it. Cold-starts
+  // on Cloud Run can take several seconds; this gives the user a clear signal
+  // that something is happening rather than a frozen-looking blank card.
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  useEffect(() => {
+    if (
+      currenciesQuery.status === 'success' &&
+      convertQuery.status === 'success'
+    ) {
+      setHasLoadedOnce(true);
+    }
+  }, [currenciesQuery.status, convertQuery.status]);
+
+  const isInitialLoad =
+    !hasLoadedOnce &&
+    currenciesQuery.status !== 'error' &&
+    convertQuery.status !== 'error';
+
   const resultDisplay =
     convertQuery.result !== null ? formatAmount(convertQuery.result) : EMPTY_RESULT_DISPLAY;
 
@@ -88,8 +108,16 @@ export function App() {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>{PAGE_TITLE}</h1>
-        <p className={styles.subtitle}>
-          {showCurrenciesError ? CURRENCIES_ERROR_FALLBACK : PAGE_SUBTITLE}
+        <p
+          className={`${styles.subtitle} ${
+            isInitialLoad ? styles.subtitleLoading : ''
+          }`}
+        >
+          {showCurrenciesError
+            ? CURRENCIES_ERROR_FALLBACK
+            : isInitialLoad
+              ? PAGE_SUBTITLE_LOADING
+              : PAGE_SUBTITLE}
         </p>
       </header>
 
@@ -99,6 +127,7 @@ export function App() {
         amountDisplay={state.amountInput}
         resultDisplay={resultDisplay}
         isSwapping={isSwapping}
+        isInitialLoad={isInitialLoad}
         isFromDropdownOpen={openDropdown === 'from'}
         isToDropdownOpen={openDropdown === 'to'}
         onAmountChange={handleAmountChange}
@@ -113,6 +142,7 @@ export function App() {
         fromCurrency={state.from}
         toCurrency={state.to}
         rate={convertQuery.rate}
+        isInitialLoad={isInitialLoad}
       />
     </main>
   );
