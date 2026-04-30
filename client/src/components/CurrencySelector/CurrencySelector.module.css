@@ -1,0 +1,48 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--trigger-gap);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-family);
+  width: 100%;
+  text-align: left;
+}
+
+.trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.code {
+  font-size: var(--font-size-code);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  opacity: var(--swap-content-opacity, 1);
+}
+
+.chevron {
+  width: var(--chevron-size);
+  height: var(--chevron-size);
+  flex-shrink: 0;
+  margin-left: auto;
+  margin-right: var(--chevron-right-offset);
+  color: var(--color-chevron);
+  transition: transform var(--chevron-rotate-duration) ease;
+}
+
+.chevron :global(*) {
+  stroke-width: var(--chevron-stroke-width);
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

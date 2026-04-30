@@ -1,0 +1,11 @@
+node_modules
+dist
+*.log
+.DS_Store
+coverage
+
+# Real env files (per agreed convention: only env/.env.example is committed)
+env/.env
+env/.env.local
+env/.env.preprod
+env/.env.prod

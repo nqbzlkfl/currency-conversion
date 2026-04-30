@@ -1,0 +1,125 @@
+:root {
+  --color-primary: #1F2261;
+  --color-text: #000000;
+  --color-surface: #FFFFFF;
+  --color-bg: #FFFFFF;
+  --color-input-bg: #F2F3F5;
+  --color-divider: #F0F0F4;
+  --color-label: #9CA3AF;
+  --color-subtitle: #9CA3AF;
+  --color-name-muted: #9CA3AF;
+  --color-dropdown-hover: #F9FAFB;
+
+  --color-chevron: #6B7280;
+  --chevron-stroke-width: 2.5;
+
+  --color-flag-border: #E5E7EB;
+  --color-flag-bg: #F9FAFB;
+
+  --color-shadow: rgba(31, 34, 97, 0.08);
+  --color-btn-shadow: rgba(31, 34, 97, 0.30);
+  --color-dropdown-shadow: rgba(31, 34, 97, 0.12);
+
+  --bg-gradient-start: #EAEAFE;
+  --bg-gradient-mid: rgba(221, 246, 243, 0);
+}
+
+:root {
+  --font-family: 'Roboto', sans-serif;
+  --font-size-title: 26px;
+  --font-size-subtitle: 14px;
+  --font-size-label: 13px;
+  --font-size-code: 18px;
+  --font-size-amount: 18px;
+  --font-size-rate-value: 16px;
+  --font-size-dropdown-code: 15px;
+  --font-size-dropdown-name: 13px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  --line-height-body: 1.5;
+  --line-height-title: 1.2;
+}
+
+:root {
+  --page-max-width: 390px;
+  --page-padding-x: 24px;
+  --page-padding-top: 36px;
+  --page-padding-bottom: 48px;
+  --header-margin-bottom: 36px;
+  --title-margin-bottom: 8px;
+
+  --breakpoint-tablet: 768px;
+
+  --card-padding-top: 24px;
+  --card-border-radius: 24px;
+  --card-shadow: 0 4px 24px var(--color-shadow);
+
+  --row-card-padding: 32px;
+  --row-padding-x: 24px;
+  --row-padding-bottom: 24px;
+  --row-label-margin-bottom: 12px;
+  --row-gap: 16px;
+
+  --trigger-gap: 8px;
+
+  --flag-size-row: 44px;
+  --flag-size-dropdown: 28px;
+  --flag-border-width: 1px;
+}
+
+:root {
+  --chevron-size: 16px;
+  --chevron-rotate-duration: 200ms;
+  --chevron-right-offset: 8px;
+
+  --pill-bg: var(--color-input-bg);
+  --pill-border-radius: 12px;
+  --pill-padding-y: 10px;
+  --pill-padding-x: 16px;
+
+  --divider-height: 1px;
+  --divider-margin-x: 24px;
+  --swap-spacer-height: 24px;
+
+  --swap-btn-size: 44px;
+  --swap-btn-border-radius: 50%;
+  --swap-btn-bg: var(--color-primary);
+  --swap-btn-shadow: 0 4px 12px var(--color-btn-shadow);
+
+  --rate-section-margin-top: 28px;
+  --rate-section-padding-x: 4px;
+  --rate-label-margin-bottom: 6px;
+}
+
+:root {
+  --dropdown-margin-top: 8px;
+  --dropdown-min-width: 280px;
+  --dropdown-max-height: 280px;
+  --dropdown-border-radius: 16px;
+  --dropdown-padding-y: 4px;
+  --dropdown-shadow: 0 8px 32px var(--color-dropdown-shadow);
+  --dropdown-z-overlay: 10;
+  --dropdown-z-panel: 20;
+
+  --dropdown-item-padding-y: 12px;
+  --dropdown-item-padding-x: 16px;
+  --dropdown-item-gap: 12px;
+
+  /* Animation: fade is 300ms (out then in = 600ms total). Spin is 900ms,
+   * deliberately longer so content settles before the icon stops rotating. */
+  --anim-fade-duration: 300ms;
+  --anim-spin-duration: 900ms;
+  --anim-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root {
+  --scrollbar-width: 6px;
+  --scrollbar-track-bg: transparent;
+  --scrollbar-thumb-bg: rgba(31, 34, 97, 0.20);
+  --scrollbar-thumb-bg-hover: rgba(31, 34, 97, 0.35);
+  --scrollbar-thumb-radius: 999px;
+  --scrollbar-thumb-margin: 4px;
+}

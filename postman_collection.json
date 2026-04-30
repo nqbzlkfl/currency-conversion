@@ -1,0 +1,172 @@
+{
+  "info": {
+    "name": "Currency Converter API",
+    "description": "Currency Converter backend API. Proxies and caches Open Exchange Rates and exposes a typed JSON contract.\n\nBase URL configured via collection variable `base_url` (default: http://localhost:8800/api).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "cc-converter-api"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8800/api",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Liveness probe. Returns status and uptime in seconds."
+      },
+      "response": []
+    },
+    {
+      "name": "Currencies",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/currencies",
+          "host": ["{{base_url}}"],
+          "path": ["currencies"]
+        },
+        "description": "Returns the intersection of OXR currencies.json and latest.json rates, sorted alphabetically by code. The frontend dropdown uses this as its source of truth."
+      },
+      "response": []
+    },
+    {
+      "name": "Rates",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/rates",
+          "host": ["{{base_url}}"],
+          "path": ["rates"]
+        },
+        "description": "Returns the latest cached rates payload. Base is always USD on the OXR free plan."
+      },
+      "response": []
+    },
+    {
+      "name": "Convert — Happy path (USD to SGD)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/convert?from=USD&to=SGD&amount=1000",
+          "host": ["{{base_url}}"],
+          "path": ["convert"],
+          "query": [
+            { "key": "from", "value": "USD" },
+            { "key": "to", "value": "SGD" },
+            { "key": "amount", "value": "1000" }
+          ]
+        },
+        "description": "Converts an amount between two currencies using cached rates."
+      },
+      "response": []
+    },
+    {
+      "name": "Convert — Same currency (rate=1)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/convert?from=USD&to=USD&amount=500",
+          "host": ["{{base_url}}"],
+          "path": ["convert"],
+          "query": [
+            { "key": "from", "value": "USD" },
+            { "key": "to", "value": "USD" },
+            { "key": "amount", "value": "500" }
+          ]
+        },
+        "description": "Edge case: same currency on both sides. Result equals input, rate equals 1."
+      },
+      "response": []
+    },
+    {
+      "name": "Convert — Error: missing param (400)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/convert?from=USD&to=SGD",
+          "host": ["{{base_url}}"],
+          "path": ["convert"],
+          "query": [
+            { "key": "from", "value": "USD" },
+            { "key": "to", "value": "SGD" }
+          ]
+        },
+        "description": "Expected: 400 with code MISSING_PARAM (amount is required)."
+      },
+      "response": []
+    },
+    {
+      "name": "Convert — Error: invalid currency format (400)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/convert?from=US&to=SGD&amount=100",
+          "host": ["{{base_url}}"],
+          "path": ["convert"],
+          "query": [
+            { "key": "from", "value": "US" },
+            { "key": "to", "value": "SGD" },
+            { "key": "amount", "value": "100" }
+          ]
+        },
+        "description": "Expected: 400 with code INVALID_CURRENCY (from must be 3 letters)."
+      },
+      "response": []
+    },
+    {
+      "name": "Convert — Error: negative amount (400)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/convert?from=USD&to=SGD&amount=-50",
+          "host": ["{{base_url}}"],
+          "path": ["convert"],
+          "query": [
+            { "key": "from", "value": "USD" },
+            { "key": "to", "value": "SGD" },
+            { "key": "amount", "value": "-50" }
+          ]
+        },
+        "description": "Expected: 400 with code INVALID_AMOUNT (amount must be non-negative)."
+      },
+      "response": []
+    },
+    {
+      "name": "Convert — Error: unknown currency (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/convert?from=USD&to=ZZZ&amount=100",
+          "host": ["{{base_url}}"],
+          "path": ["convert"],
+          "query": [
+            { "key": "from", "value": "USD" },
+            { "key": "to", "value": "ZZZ" },
+            { "key": "amount", "value": "100" }
+          ]
+        },
+        "description": "Expected: 404 with code UNKNOWN_CURRENCY (valid format but not in cached rates)."
+      },
+      "response": []
+    }
+  ]
+}

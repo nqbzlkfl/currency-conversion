@@ -1,0 +1,16 @@
+.section {
+  margin-top: var(--rate-section-margin-top);
+  padding: 0 var(--rate-section-padding-x);
+}
+
+.label {
+  font-size: var(--font-size-label);
+  color: var(--color-label);
+  margin-bottom: var(--rate-label-margin-bottom);
+}
+
+.value {
+  font-size: var(--font-size-rate-value);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}

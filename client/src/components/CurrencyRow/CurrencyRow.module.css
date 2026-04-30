@@ -1,0 +1,45 @@
+.row {
+  padding: var(--row-card-padding) var(--row-padding-x);
+}
+
+.label {
+  font-size: var(--font-size-label);
+  color: var(--color-label);
+  margin-bottom: var(--row-label-margin-bottom);
+}
+
+.controls {
+  display: flex;
+  gap: var(--row-gap);
+  align-items: center;
+  --swap-content-opacity: 1;
+}
+
+.controls > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.selectorHost {
+  position: relative;
+}
+
+/* Animates --swap-content-opacity over 600ms (300ms out, 300ms in).
+ * Descendants reading this var fade; pill bg, chevron, label stay solid. */
+.fadingControls {
+  animation: rowSwapFade calc(var(--anim-fade-duration) * 2) ease forwards;
+}
+
+@keyframes rowSwapFade {
+  0%   { --swap-content-opacity: 1; }
+  50%  { --swap-content-opacity: 0; }
+  100% { --swap-content-opacity: 1; }
+}
+
+/* @property registration enables interpolation of the custom property.
+ * Without this, the variable would step 1 → 0 → 1 instead of fading. */
+@property --swap-content-opacity {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}

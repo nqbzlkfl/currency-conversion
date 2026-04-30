@@ -1,0 +1,583 @@
+# Currency Converter
+
+A single-purpose currency converter web app: pick two currencies, type an amount, see the converted value and live rate. Built as a fullstack assignment using Open Exchange Rates.
+
+**Stack:** React 18 + TypeScript + Vite (frontend) · Node 22 + Express 4 + TypeScript (backend) · in-memory TTL cache · Open Exchange Rates (free tier).
+
+![Status](https://img.shields.io/badge/Node-22-green) ![Tests](https://img.shields.io/badge/tests-53%20passing-brightgreen) ![Build](https://img.shields.io/badge/build-passing-brightgreen)
+
+---
+
+## Table of Contents
+
+1. [Quick Start](#1-quick-start)
+2. [Project Structure](#2-project-structure)
+3. [Environments](#3-environments)
+4. [API Reference](#4-api-reference)
+5. [Test Coverage](#5-test-coverage)
+6. [CI / Build Pipeline](#6-ci--build-pipeline)
+7. [Postman Collection](#7-postman-collection)
+8. [Optional: Docker Setup](#8-optional-docker-setup)
+9. [Architecture & Design Docs](#9-architecture--design-docs)
+10. [AI Prompt Log](#10-ai-prompt-log)
+11. [Troubleshooting](#11-troubleshooting)
+
+---
+
+## 1. Quick Start
+
+**Prerequisites:** Node 22 (use `nvm use` — `.nvmrc` files are provided), npm 10+.
+
+```bash
+# 1. Backend (terminal 1)
+cd server
+cp env/.env.example env/.env.local   # then edit OXR_APP_ID
+npm install
+npm run dev                          # → http://localhost:8800
+
+# 2. Frontend (terminal 2)
+cd client
+cp env/.env.example env/.env.local
+npm install
+npm run dev                          # → http://localhost:5173
+```
+
+Open **http://localhost:5173** in your browser. The Vite dev server proxies `/api/*` to `localhost:8800`, so no CORS configuration is required.
+
+**Default conversion:** USD → SGD, 1,000 (matches the Figma mockup).
+
+---
+
+## 2. Project Structure
+
+```
+currency-conversion-converter/
+├── .github/workflows/         CI workflows (GitHub Actions)
+├── client/                    Vite + React + TS frontend
+│   ├── src/
+│   │   ├── components/        UI components (each with .module.css)
+│   │   ├── hooks/             useConvert, useCurrencies, useSwapAnimation
+│   │   ├── helpers/           constants/, format.ts, currencyToCountry.ts
+│   │   ├── services/          api.ts (fetch wrapper), mockData.ts
+│   │   ├── styles/            tokens.css, reset.css, global.css
+│   │   └── types/             api.ts (mirrors server contract)
+│   └── .env.{local,preprod,prod}
+│
+├── server/                    Node + Express + TS backend (MVC)
+│   ├── src/
+│   │   ├── controllers/       Thin: parse → service → respond
+│   │   ├── services/          OXR fetch + cache + conversion math
+│   │   ├── middleware/        Validation, error handling, 404
+│   │   ├── routes/            Express router wiring
+│   │   ├── helpers/constants/ Routes, error codes, HTTP statuses
+│   │   ├── config/env.ts      Env loader + validator
+│   │   └── utils/             ApiError, logger
+│   ├── tests/{unit,integration}
+│   └── .env.{local,preprod,prod}
+│
+├── docs/                      Architecture & spec documents (1–5)
+├── postman_collection.json    Importable Postman collection
+└── README.md                  ← you are here
+```
+
+---
+
+## 3. Environments
+
+Three environments are supported on both client and server: **local**, **preprod**, **prod**.
+
+### Backend env files (`server/env/.env.{local,preprod,prod}`)
+
+| Variable             | local     | preprod    | prod       | Purpose                              |
+|----------------------|-----------|------------|------------|--------------------------------------|
+| `OXR_APP_ID`         | required  | required   | required   | Open Exchange Rates App ID           |
+| `PORT`               | 8800      | 8800       | 8800       | HTTP listen port                     |
+| `OXR_BASE_URL`       | OXR url   | OXR url    | OXR url    | Upstream API base                    |
+| `RATES_TTL_MS`       | 60000     | 3600000    | 3600000    | Rates cache TTL (1m dev / 1h prod)   |
+| `CURRENCIES_TTL_MS`  | 300000    | 86400000   | 86400000   | Currencies cache TTL                 |
+| `CORS_ORIGIN`        | localhost | preprod URL| prod URL   | Allowed CORS origin                  |
+| `LOG_LEVEL`          | debug     | info       | warn       | Logger threshold                     |
+
+Selected at runtime via `APP_ENV={local|preprod|prod}` (set by npm scripts).
+
+### Frontend env files (`client/env/.env.{local,preprod,prod}`)
+
+| Variable              | local     | preprod                                  | prod                                  |
+|-----------------------|-----------|------------------------------------------|---------------------------------------|
+| `VITE_USE_MOCK`       | false     | false                                    | false                                 |
+| `VITE_API_BASE_URL`   | `/api`    | `https://preprod-api.example.com/api`    | `https://api.example.com/api`         |
+
+Selected via Vite's `--mode` flag (Vite reads from `client/env/` via the `envDir` config). `.env.local` is auto-loaded by Vite in every mode (gitignored).
+
+> **Convention:** only `env/.env.example` is committed; real env files in `env/` are gitignored.
+
+---
+
+## 4. API Reference
+
+All endpoints under `/api`. Base URL: `http://localhost:8800/api` (dev).
+
+### `GET /api/health`
+
+Liveness probe. No upstream calls.
+
+```bash
+curl http://localhost:8800/api/health
+# → { "status": "ok", "uptime": 12.5 }
+```
+
+### `GET /api/currencies`
+
+Returns the intersection of OXR `currencies.json` ∩ `latest.json` rates, sorted alphabetically.
+
+```bash
+curl http://localhost:8800/api/currencies
+# → { "currencies": [{ "code": "AED", "name": "United Arab Emirates Dirham" }, ...] }
+```
+
+### `GET /api/rates`
+
+Returns the cached rates payload. Base is always USD on the OXR free plan.
+
+```bash
+curl http://localhost:8800/api/rates
+# → { "base": "USD", "timestamp": 1714435200, "rates": { "SGD": 1.36, ... } }
+```
+
+### `GET /api/convert?from=&to=&amount=`
+
+Converts an amount between two currencies using cached rates.
+
+```bash
+curl "http://localhost:8800/api/convert?from=USD&to=SGD&amount=1000"
+# → { "from":"USD","to":"SGD","amount":1000,"result":1360,"rate":1.36,"timestamp":1714435200 }
+```
+
+**Math:** `result = amount × (rates[to] / rates[from])` (cross-currency via implicit USD base).
+
+### Error contract
+
+All errors return:
+```json
+{ "error": true, "code": "<CODE>", "message": "<human-readable>" }
+```
+
+| HTTP | Code                  | Trigger                                              |
+|------|-----------------------|------------------------------------------------------|
+| 400  | `MISSING_PARAM`       | Required query param absent                          |
+| 400  | `INVALID_CURRENCY`    | `from`/`to` not 3 letters                            |
+| 400  | `INVALID_AMOUNT`      | Not finite or negative                               |
+| 404  | `UNKNOWN_CURRENCY`    | Valid format but not in cached rates                 |
+| 404  | `NOT_FOUND`           | Unknown route                                        |
+| 502  | `UPSTREAM_FAILURE`    | OXR network/5xx error                                |
+| 502  | `UPSTREAM_RATE_LIMIT` | OXR returned 429                                     |
+| 500  | `INTERNAL_ERROR`      | Unexpected exception                                 |
+
+---
+
+## 5. Test Coverage
+
+**Total:** 53 tests passing (31 backend + 22 frontend). All run with `npm test`.
+
+### Backend tests — `server/tests/`
+
+#### Unit: `cache.service.test.ts` (6 tests)
+| # | Test | What it verifies | Expected |
+|---|------|------------------|----------|
+| 1 | returns null for missing keys | Cache miss returns null, not throws | `null` |
+| 2 | stores and retrieves values within TTL | Set then get returns the same value | Stored value |
+| 3 | returns null after TTL expires | Time travel past expiry → null | `null` |
+| 4 | removes expired entries on access | Lazy cleanup keeps memory tidy | `size === 0` |
+| 5 | delete removes a specific key | Targeted removal works | One key gone, other intact |
+| 6 | clear removes all keys | Wholesale reset | `size === 0` |
+
+#### Unit: `conversion.service.test.ts` (7 tests)
+| # | Test | What it verifies | Expected |
+|---|------|------------------|----------|
+| 1 | converts USD to SGD using rate ratio | Math correctness on canonical pair | `1000 × 1.36 = 1360` |
+| 2 | converts SGD to USD as the inverse | Symmetric inversion | `≈ 1/1.36` |
+| 3 | cross-currency via implicit USD (EUR→MYR) | `rates.MYR / rates.EUR` | Rate ratio |
+| 4 | rate of 1 for same-currency conversion | Identity case | `rate=1, result=amount` |
+| 5 | handles zero amount | Edge case | `result=0, rate=1.36` |
+| 6 | throws UNKNOWN_CURRENCY for missing from-rate | `ApiError 404` thrown | `code: UNKNOWN_CURRENCY` |
+| 7 | throws UNKNOWN_CURRENCY for missing to-rate | `ApiError 404` thrown | `code: UNKNOWN_CURRENCY` |
+
+#### Integration: `health.test.ts` (1 test)
+| # | Test | What it verifies | Expected |
+|---|------|------------------|----------|
+| 1 | returns 200 with status and uptime | Liveness probe contract | `{status:"ok", uptime:number}` |
+
+#### Integration: `currencies.test.ts` (3 tests)
+| # | Test | What it verifies | Expected |
+|---|------|------------------|----------|
+| 1 | returns intersection sorted by code | Excludes codes with no rate (e.g. ANG) | Alphabetical, no orphans |
+| 2 | returns 502 UPSTREAM_FAILURE on network error | Catches `fetch()` throw | `502 UPSTREAM_FAILURE` |
+| 3 | returns 502 UPSTREAM_RATE_LIMIT on 429 | Maps OXR rate-limit | `502 UPSTREAM_RATE_LIMIT` |
+
+#### Integration: `rates.test.ts` (1 test)
+| # | Test | What it verifies | Expected |
+|---|------|------------------|----------|
+| 1 | returns cached payload | Pass-through of `base/timestamp/rates` | OXR shape |
+
+#### Integration: `notFound.test.ts` (1 test)
+| # | Test | What it verifies | Expected |
+|---|------|------------------|----------|
+| 1 | returns 404 NOT_FOUND for unknown routes | 404 fallback middleware | `404 NOT_FOUND` |
+
+#### Integration: `convert.test.ts` (12 tests)
+| # | Test | What it verifies | Expected |
+|---|------|------------------|----------|
+| 1 | happy path USD→SGD amount 1000 | Full controller→service→math chain | `result=1360, rate=1.36` |
+| 2 | normalises lowercase currency codes | Validation upper-cases input | `from=USD, to=SGD` |
+| 3 | returns 0 for amount=0 | Edge case, no error | `result=0` |
+| 4 | 400 MISSING_PARAM when from missing | Validation triggers | `400 MISSING_PARAM` |
+| 5 | 400 MISSING_PARAM when amount missing | Validation triggers | `400 MISSING_PARAM` |
+| 6 | 400 INVALID_CURRENCY when from < 3 letters | Format check | `400 INVALID_CURRENCY` |
+| 7 | 400 INVALID_CURRENCY when to has digits | Format check | `400 INVALID_CURRENCY` |
+| 8 | 400 INVALID_AMOUNT when amount=abc | Numeric parse fails | `400 INVALID_AMOUNT` |
+| 9 | 400 INVALID_AMOUNT when amount=-50 | Range check | `400 INVALID_AMOUNT` |
+| 10 | 404 UNKNOWN_CURRENCY for valid format unsupported code | Cache lookup miss | `404 UNKNOWN_CURRENCY` |
+| 11 | **caches rates** — 2 sequential requests = 1 upstream fetch | TTL cache works | `fetch` called once |
+| 12 | **single-flight** — 5 concurrent requests = 1 upstream fetch | Concurrency guard works | `fetch` called once |
+
+---
+
+### Frontend tests — `client/src/`
+
+#### `helpers/format.test.ts` (14 tests)
+| # | Test | What it verifies | Expected |
+|---|------|------------------|----------|
+| 1 | formatAmount: integer with commas | `1000 → "1,000.00"` | Comma + 2dp |
+| 2 | formatAmount: small decimal | `0.5 → "0.50"` | Pad to 2dp |
+| 3 | formatAmount: negative | `-1234.5 → "-1,234.50"` | Sign preserved |
+| 4 | formatAmount: rounds 3+ decimals | `1.236 → "1.24"` | Half-up rounding |
+| 5 | formatAmount: large numbers | `1000000 → "1,000,000.00"` | All separators |
+| 6 | formatRate: 4 decimal places | `1.36 → "1.3600"` | Pad to 4dp |
+| 7 | formatRate: rounds beyond 4dp | `1.23456789 → "1.2346"` | Half-up |
+| 8 | parseAmount: strips commas | `"1,234.56" → 1234.56` | Numeric value |
+| 9 | parseAmount: handles plain decimals | `"99.5" → 99.5` | No-op |
+| 10 | parseAmount: invalid → NaN | `"abc"` | `NaN` |
+| 11 | formatAmountInput: in-progress decimal | `"1234." → "1,234."` | Trailing dot kept |
+| 12 | formatAmountInput: incomplete decimal | `"1234.5" → "1,234.5"` | Single dp kept |
+| 13 | formatAmountInput: strips invalid chars | `"1a2b3" → "123"` | Non-numeric dropped |
+| 14 | formatAmountInput: empty string | `""` | `""` |
+
+#### `helpers/currencyToCountry.test.ts` (4 tests)
+| # | Test | What it verifies | Expected |
+|---|------|------------------|----------|
+| 1 | maps known currency to ISO country | `USD → US, SGD → SG, MYR → MY` | Correct ISO-3166 alpha-2 |
+| 2 | falls back to UN for unknown code | `XYZ → UN` | UN sentinel (UN flag) |
+| 3 | EUR maps to EU | Multi-country currency special-case | `EUR → EU` |
+| 4 | uppercases input | `usd → US` (case-insensitive) | Treated same as USD |
+
+#### `services/mockData.test.ts` (4 tests)
+| # | Test | What it verifies | Expected |
+|---|------|------------------|----------|
+| 1 | mock conversion uses local RATES table | USD→SGD with mock data | Same formula as backend |
+| 2 | mock returns rate of 1 for same currency | Identity case | `rate=1` |
+| 3 | mock throws for unknown currency | Mirrors backend error | Throws |
+| 4 | mock currencies list is non-empty | Sanity check | `length > 0` |
+
+> **Note:** Component-level tests intentionally minimal — UI behaviour is verified by integration with the live backend during dev. The 22 frontend tests focus on pure logic (formatters, mappers, mock service) where regressions would be silent.
+
+---
+
+## 6. CI / Build Pipeline
+
+GitHub Actions workflow at `.github/workflows/ci.yml`.
+
+**Triggers:** push and pull request to `main` or `develop`.
+
+**Two parallel jobs:**
+
+| Job      | Steps                                                  |
+|----------|--------------------------------------------------------|
+| `server` | Setup Node 22 → `npm ci` → `lint` → `test` → `build`   |
+| `client` | Setup Node 22 → `npm ci` → `lint` → `test` → 3× builds (local, preprod, prod) |
+
+**Concurrency control:** previous runs on the same branch are cancelled when a new commit comes in (`cancel-in-progress: true`).
+
+**Caching:** npm cache keyed on `package-lock.json` per project for fast re-installs.
+
+The pipeline runs lint as `tsc --noEmit` for the client and as `tsc -p tsconfig.test.json --noEmit` for the server (covers both `src/` and `tests/`). Tests run with `vitest run`. Builds are type-check-only on the server (since runtime uses `tsx`) and full Vite production builds on the client.
+
+To run the same checks locally:
+```bash
+# Server
+cd server && npm run lint && npm test && npm run build
+
+# Client
+cd client && npm run lint && npm test && npm run build:prod
+```
+
+---
+
+## 7. Postman Collection
+
+A Postman collection is included at `postman_collection.json` covering all 4 endpoints plus 5 error scenarios (9 requests total).
+
+**Import steps:**
+1. Open Postman → **Collections** → **Import** (top-left)
+2. Drop the `postman_collection.json` file in
+3. The collection variable `base_url` defaults to `http://localhost:8800/api` — edit it to point at preprod/prod when needed
+
+**Included requests:**
+
+| # | Name                                       | Method | Path                                    |
+|---|--------------------------------------------|--------|-----------------------------------------|
+| 1 | Health                                     | GET    | `/health`                               |
+| 2 | Currencies                                 | GET    | `/currencies`                           |
+| 3 | Rates                                      | GET    | `/rates`                                |
+| 4 | Convert — Happy path (USD to SGD)          | GET    | `/convert?from=USD&to=SGD&amount=1000`  |
+| 5 | Convert — Same currency (rate=1)           | GET    | `/convert?from=USD&to=USD&amount=500`   |
+| 6 | Convert — Error: missing param (400)       | GET    | `/convert?from=USD&to=SGD`              |
+| 7 | Convert — Error: invalid currency (400)    | GET    | `/convert?from=US&to=SGD&amount=100`    |
+| 8 | Convert — Error: negative amount (400)     | GET    | `/convert?from=USD&to=SGD&amount=-50`   |
+| 9 | Convert — Error: unknown currency (404)    | GET    | `/convert?from=USD&to=ZZZ&amount=100`   |
+
+---
+
+## 8. Optional: Docker Setup
+
+Docker is **not** required to run this project — the native flow in §1 is the primary supported path. Use Docker only if you prefer a one-command containerised startup.
+
+The architecture is documented in [`docs/setup/03-setup-and-docker.md`](docs/setup/03-setup-and-docker.md). To enable Docker, follow these steps:
+
+### Step 1 — Create `server/Dockerfile`
+
+```dockerfile
+FROM node:22-alpine
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev && npm install tsx
+
+COPY tsconfig.json ./
+COPY src ./src
+
+ENV NODE_ENV=production
+EXPOSE 8800
+CMD ["npx", "tsx", "src/server.ts"]
+```
+
+### Step 2 — Create `client/Dockerfile`
+
+```dockerfile
+# Build stage
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY tsconfig.json vite.config.ts index.html ./
+COPY src ./src
+COPY public ./public
+RUN npm run build:prod
+
+# Runtime stage
+FROM nginx:1.27-alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+### Step 3 — Create `client/nginx.conf`
+
+```nginx
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+
+  location /api/ {
+    proxy_pass http://server:8800/api/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+}
+```
+
+### Step 4 — Create root `docker-compose.yml`
+
+```yaml
+services:
+  server:
+    build: ./server
+    container_name: cc-server
+    environment:
+      - APP_ENV=prod
+      - PORT=8800
+      - OXR_APP_ID=${OXR_APP_ID}
+      - OXR_BASE_URL=https://openexchangerates.org/api
+      - RATES_TTL_MS=3600000
+      - CURRENCIES_TTL_MS=86400000
+      - CORS_ORIGIN=*
+      - LOG_LEVEL=info
+    expose:
+      - "8800"
+    restart: unless-stopped
+
+  client:
+    build: ./client
+    container_name: cc-client
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+```
+
+### Step 5 — Create `.env` at repo root
+
+```
+OXR_APP_ID=aa141bebf0c24253a6a89a9f9591c0d9
+```
+
+### Step 6 — Run
+
+```bash
+docker compose up --build      # build & start
+# open http://localhost:8080
+
+docker compose logs -f server  # tail backend logs
+docker compose down            # stop & remove
+```
+
+**Notes:**
+- The backend port (8800) is **not** published to the host — only the nginx-served frontend on `8080`. Backend reachable only via the docker network.
+- For dev with hot reload, use the native flow in §1, not Docker.
+
+---
+
+## 9. Architecture & Design Docs
+
+Detailed design documents live in [`docs/`](docs/):
+
+| Doc | Covers |
+|-----|--------|
+| [`01-frontend-architecture.md`](docs/01-frontend-architecture.md) | Stack, folder tree, state model, data flow, animation system, testing approach |
+| [`02-backend-architecture.md`](docs/02-backend-architecture.md) | MVC contract, full API spec, error matrix, caching strategy, env vars |
+| [`03-setup-and-docker.md`](docs/setup/03-setup-and-docker.md) | Prerequisites, env setup, native run, Docker (full architecture), troubleshooting |
+| [`04-functional-specification.md`](docs/04-functional-specification.md) | Element-by-element behaviour, validation rules, animation timings, 25+ acceptance criteria |
+| [`05-product-requirements.md`](docs/05-product-requirements.md) | Problem, personas, user stories, features, NFRs, constraints, risks |
+
+Plus the source assets used as inputs:
+- `Code_Standard` — coding standards (DRY, YAGNI, MVC, no unnecessary deps)
+- `Open_Exchange_Rates_API_` — OXR API reference & quirks
+- `uiux_guideline.md` — full design tokens & component specs from the Figma source
+- `UI.pdf` — original Android Figma mockups
+
+---
+
+## 10. AI Prompt Log
+
+This project was built collaboratively with Claude (Anthropic) per the assignment policy on AI assistance. The summary below captures the major decisions, prompts, and architectural debates from the build session — not a verbatim transcript, but a faithful record of what was asked and decided.
+
+### Phase 1 — Planning & locked decisions
+
+The session opened by uploading the assignment PDF, the OXR API guide, the UI/UX guideline, the code standard, and the Figma source (`UI.pdf`). Ground rules were set up front:
+
+> *"Act as a senior full-stack developer with 10+ years of experience. If you don't know something, say so clearly. Always ask questions or propose changes before proceeding. Don't over-engineer or add anything not explicitly requested."*
+
+Before any code was written, the assistant proposed an architecture and asked for confirmation on every major decision. The following were locked:
+
+- **Stack:** Vite + React 18 + TS (frontend), Node 22 + Express 4 + TS (backend), separate folders (no monorepo), in-memory `Map` cache (no Redis/sqlite), zero unnecessary deps.
+- **Bonuses included:** `/rates` endpoint, integration tests. Docker added later as a scope addition.
+- **Custom rule from user:** "No hardcoded colors or magic numbers. Visual values go in `tokens.css`, behavior values go in `helpers/constants/`. Use `@/*` path alias."
+- **Three environments:** local, preprod, prod — selected via `APP_ENV` (backend) and Vite `--mode` (frontend), `dotenv-cli` for backend env loading. Env files live in `env/` on each side; only `env/.env.example` committed.
+
+### Phase 2 — Documentation first
+
+Before writing any source code, the assistant produced five design documents (`01-` through `05-` in `docs/`) covering frontend architecture, backend architecture, setup & Docker, functional specification, and product requirements. The user reviewed and approved each in turn. Rationale: aligning on contracts and behavior up front made the implementation phase mostly mechanical.
+
+### Phase 3 — Frontend implementation
+
+> *"Build the prototype as a single HTML file first so I can validate the design before we commit to the React structure."*
+
+The assistant produced a working single-file HTML prototype with hardcoded rates, then ported the structure into the proper Vite/React/TS project. Each component got its own folder with a co-located `.module.css` file. Animation timings were extracted into `tokens.css`; behaviour constants into `helpers/constants/`.
+
+#### Notable iterations:
+- **Flag rendering bug** went through three rounds. The user kept screenshotting "still doesn't fill the circle." First two rounds the assistant guessed at `object-fit: cover` and `transform: scale(1.5)` without checking the actual DOM. Third round the assistant finally read `react-country-flag/src/index.tsx` and discovered: it renders an `<img>` (not `<svg>`) sourced from a CDN, with inline `width: 1em; height: 1em`. Fix was a `:global(img)` selector with `!important` to override the inline styles. **Lesson reinforced:** inspect the actual library output before guessing.
+
+- **Swap re-fire bug.** When swap exchanges `from`/`to`, the *set* of values doesn't change so `useEffect([from, to])` doesn't re-fire. Fix: monotonic `epoch` counter on the reducer that increments on every action; `useConvert` watches `[immediate, epoch]` instead.
+
+- **Swap animation timing.** User initially asked for the swap rotation to feel "more weighty." Bumped from 600ms to 900ms; fade duration kept at 300ms so content fades back in while the icon is still rotating. The two timings deliberately overlap — content settles before the icon finishes spinning.
+
+### Phase 4 — Backend implementation
+
+> *"Build it now. MVC strictly. Ask before any architectural divergence."*
+
+Built in this order: scaffold → helpers/constants → utils (`ApiError`, `logger`) → config (`env.ts`) → cache service → OXR service (with single-flight) → conversion service → middleware → controllers → routes → app factory → server bootstrap.
+
+#### Notable decisions:
+- **Single-flight pattern.** During cache miss, an in-flight `Promise` is registered so concurrent requests for the same key share one upstream fetch. Verified by the "5 concurrent requests = 1 fetch" integration test.
+
+- **`tsx` for production runs.** Initial plan was to `tsc` emit JS and run `node dist/server.js`. ESM strictness in Node 22 requires `.js` extensions on imports plus an alias resolver — both add complexity for no real benefit on an assignment-scope project. Decided to keep `tsx` for both `dev:*` and `start:*` scripts. `npm run build` is `tsc --noEmit` (type-check only). This was an honest trade-off, not an oversight.
+
+- **Test type-check vs build type-check.** Putting `tests/` in the main `tsconfig.json` broke `rootDir: "src"`. Created `tsconfig.test.json` extending the main tsconfig with `rootDir: "."`. The lint script uses the test config; the build script uses the main one.
+
+- **`fetch` mock typing.** `RequestInfo` is a DOM type, not a Node type. Used `string | URL | Request` in test helpers to keep the strict type-check happy.
+
+### Phase 5 — Three-environment setup
+
+Discussed four options for env loading. Chose: custom `APP_ENV=local|preprod|prod` (separate from `NODE_ENV`), `env/.env.example` committed, real env files in `env/` gitignored, `dotenv-cli` to load the right file at script start. Frontend uses Vite's `--mode` flag with `envDir: './env'` in `vite.config.ts`.
+
+> *"Vite errored on `--mode local` because `.env.local` is reserved."*
+
+Vite reserves `.env.local` as a special always-loaded gitignored override. The fix was to use `vite` (no `--mode` flag) for local — Vite auto-loads `.env` + `.env.local` — and `--mode preprod`/`--mode prod` for the others.
+
+### Phase 6 — Port number consistency
+
+Initial port was 3000. User decided mid-session to use 8800 instead. Used a Python regex `3000(?!\d)` to swap port references across env files, source code, and docs without mangling TTL values like `3600000` and `86400000`. 23 references updated across docs alone.
+
+### Phase 7 — Final deliverables (this turn)
+
+User requested:
+1. Scrollbar styling on the dropdown panel — done with `::-webkit-scrollbar` + Firefox `scrollbar-width: thin`, primary-tinted thumb at 20%/35% opacity.
+2. GitHub Actions CI — `.github/workflows/ci.yml` with separate server/client jobs, npm cache, concurrency cancellation.
+3. This README with the full AI prompt log + test coverage table.
+4. Postman collection — 9 requests covering all endpoints + error cases.
+5. Docker setup as **optional step-by-step instructions** (above) rather than created files — user wanted the choice.
+
+### Reflections on the AI collaboration
+
+What worked:
+- **Asking before coding.** The "ask question first" rule prevented at least three over-engineered detours (a database layer, complex CSS frameworks, premature monorepo setup).
+- **Locking decisions in writing.** The `01-`–`05-` docs served as a contract that both sides referred back to throughout implementation.
+- **User pushback was high-signal.** When the user said "still doesn't fit" three times on the flag bug, the right response would have been to inspect the library output on round 1, not round 3.
+
+What didn't:
+- The assistant occasionally guessed at fixes when reading the actual library or DOM would have been faster (the flag bug; the ESM extension issue).
+- A few times, scope crept past what was asked — the assistant once started writing nginx config when the user only wanted a Postman collection.
+
+---
+
+## 11. Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| Backend fails with `Missing required environment variable: OXR_APP_ID` | No `env/.env.local` in `server/` | `cp server/env/.env.example server/env/.env.local` and fill `OXR_APP_ID` |
+| Frontend shows "Service temporarily unavailable" | Backend not running or wrong port | Start backend (`cd server && npm run dev`); confirm on `localhost:8800` |
+| All conversions show same value across multiple changes | Cache stuck on stale OXR data | Restart backend — memory cache resets on every restart |
+| `502 UPSTREAM_RATE_LIMIT` | OXR free-plan monthly quota exhausted | Wait for quota reset, or use a different App ID |
+| CORS error in browser | Frontend served from origin not in `CORS_ORIGIN` | Update `CORS_ORIGIN` in `server/env/.env.local`, or use the Vite proxy (default) |
+| Tests fail with `RequestInfo is not defined` | Old test helper using DOM type | Already fixed — pull latest |
+| Vite errors `cannot be used as a mode name` | Tried `--mode local` | Use `npm run dev` (no flag) — `.env.local` is auto-loaded |
+| Dropdown shows default browser scrollbar | Old CSS cached | Hard reload (Cmd+Shift+R) |
+| Swap doesn't fire conversion after 1st use | (Should not happen — `epoch` counter fixes it) | If reproducible, check `useConverterState.ts` increments `epoch` on every action |
+
+---
+
+## License
+
+ISC — see `package.json`.
+
+## Acknowledgements
+
+- Open Exchange Rates for the free API tier
+- Lipis flag-icons for the SVG flags (via `react-country-flag`)
+- Lucide for the chevron icon
+- Anthropic Claude as a coding collaborator (see §10)

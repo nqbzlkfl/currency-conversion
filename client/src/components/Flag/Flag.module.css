@@ -1,0 +1,35 @@
+.flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: var(--flag-border-width) solid var(--color-flag-border);
+  background: var(--color-flag-bg);
+  overflow: hidden;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+}
+
+/* react-country-flag renders an <img> with inline 1em sizing — !important
+ * is required to override the library's inline styles. opacity here also
+ * isolates the swap fade to artwork only; the badge frame (border + bg)
+ * stays solid. */
+.flag :global(img) {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  opacity: var(--swap-content-opacity, 1);
+}
+
+.row {
+  width: var(--flag-size-row);
+  height: var(--flag-size-row);
+}
+
+.dropdown {
+  width: var(--flag-size-dropdown);
+  height: var(--flag-size-dropdown);
+}

@@ -1,0 +1,93 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dropdown-z-overlay);
+  background: transparent;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + var(--dropdown-margin-top));
+  left: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--dropdown-border-radius);
+  min-width: var(--dropdown-min-width);
+  max-height: var(--dropdown-max-height);
+  overflow-y: auto;
+  box-shadow: var(--dropdown-shadow);
+  z-index: var(--dropdown-z-panel);
+  padding: var(--dropdown-padding-y) 0;
+
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
+}
+
+/* WebKit / Blink scrollbar (Chrome, Safari, Edge).
+ * Uses ::-webkit-scrollbar pseudo-elements; Firefox already covered above. */
+.panel::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.panel::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+  margin: var(--scrollbar-thumb-margin) 0;
+}
+
+.panel::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: var(--scrollbar-thumb-radius);
+}
+
+.panel::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-bg-hover);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--dropdown-item-gap);
+  padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-family);
+}
+
+.item:hover,
+.item:focus-visible {
+  background: var(--color-dropdown-hover);
+  outline: none;
+}
+
+.item.selected {
+  background: var(--color-dropdown-hover);
+}
+
+.item.selected .code {
+  font-weight: var(--font-weight-bold);
+}
+
+.code {
+  font-size: var(--font-size-dropdown-code);
+  color: var(--color-primary);
+  flex-shrink: 0;
+  font-weight: var(--font-weight-regular);
+}
+
+.name {
+  font-size: var(--font-size-dropdown-name);
+  color: var(--color-name-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

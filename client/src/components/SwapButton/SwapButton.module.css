@@ -1,0 +1,49 @@
+.dividerArea {
+  position: relative;
+}
+
+.divider {
+  height: var(--divider-height);
+  background: var(--color-divider);
+  margin: 0 var(--divider-margin-x);
+}
+
+.swapSpacer {
+  height: var(--swap-spacer-height);
+}
+
+.button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--swap-btn-size);
+  height: var(--swap-btn-size);
+  border-radius: var(--swap-btn-border-radius);
+  background: var(--swap-btn-bg);
+  box-shadow: var(--swap-btn-shadow);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.iconWrap {
+  display: flex;
+}
+
+.iconWrap.spin {
+  animation: spin180 var(--anim-spin-duration) var(--anim-easing) forwards;
+}
+
+@keyframes spin180 {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(180deg); }
+}

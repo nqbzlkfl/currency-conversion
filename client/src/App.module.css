@@ -1,0 +1,37 @@
+.page {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: var(--page-padding-top) var(--page-padding-x) var(--page-padding-bottom);
+}
+
+.header {
+  margin-bottom: var(--header-margin-bottom);
+  text-align: center;
+}
+
+.title {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--title-margin-bottom);
+  line-height: var(--line-height-title);
+}
+
+.subtitle {
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-subtitle);
+  line-height: var(--line-height-body);
+}
+
+/* Tablet & desktop: vertically center the card on the viewport.
+ * Mobile retains the top-aligned layout. */
+@media (min-width: 768px) {
+  .page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: var(--page-padding-bottom);
+    padding-bottom: var(--page-padding-bottom);
+  }
+}

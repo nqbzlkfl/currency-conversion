@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Currency Converter — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-primary: #1F2261;
+    --color-surface: #FFFFFF;
+    --color-input-bg: #F2F3F5;
+    --color-divider: #F0F0F4;
+    --color-label: #9CA3AF;
+    --card-shadow: 0 4px 24px rgba(31, 34, 97, 0.08);
+    --swap-shadow: 0 4px 12px rgba(31, 34, 97, 0.30);
+    --dropdown-shadow: 0 8px 32px rgba(31, 34, 97, 0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #ffffff;
+    background-image: radial-gradient(ellipse at top left, #EAEAFE 0%, rgba(221, 246, 243, 0) 65%);
+    min-height: 100vh;
+    color: var(--color-primary);
+  }
+
+  .page {
+    max-width: 390px;
+    margin: 0 auto;
+    padding: 36px 24px 48px;
+  }
+
+  header { margin-bottom: 36px; }
+  .title { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+  .subtitle { font-size: 14px; font-weight: 400; color: var(--color-label); line-height: 1.5; }
+
+  .card {
+    background: var(--color-surface);
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    padding-top: 24px;
+    position: relative;
+  }
+
+  .row { padding: 0 24px 24px; }
+  .row .label { font-size: 13px; color: var(--color-label); margin-bottom: 12px; }
+  .row .controls { display: flex; gap: 16px; align-items: center; }
+  .row .controls > * { flex: 1; min-width: 0; }
+
+  /* Trigger button */
+  .trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+  }
+  .flag-44 { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--color-input-bg); }
+  .flag-44 svg { width: 100%; height: 100%; display: block; }
+  .code { font-size: 18px; font-weight: 700; color: var(--color-primary); }
+  .chevron { width: 16px; height: 16px; flex-shrink: 0; transition: transform 200ms; }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* Amount input */
+  .pill {
+    background: var(--color-input-bg);
+    border: none;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-align: right;
+    width: 100%;
+    font-family: inherit;
+    outline: none;
+  }
+  .pill:read-only { cursor: default; }
+
+  /* Divider + swap */
+  .divider-area { position: relative; }
+  .divider { height: 1px; background: var(--color-divider); margin: 0 24px; }
+  .swap-spacer { height: 24px; }
+  .swap-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: var(--swap-shadow);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .swap-icon-wrap { display: flex; }
+  .swap-icon-wrap.spin { animation: spin180 600ms cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+  @keyframes spin180 { from { transform: rotate(0deg); } to { transform: rotate(180deg); } }
+
+  /* Animated content (flag + amount) */
+  .anim { transition: opacity 0ms; }
+  .fade-out { animation: fadeOut 300ms ease forwards; }
+  .fade-in { animation: fadeIn 300ms ease forwards; }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Rate section */
+  .rate {
+    margin-top: 28px;
+    padding: 0 4px;
+  }
+  .rate-label { font-size: 13px; color: var(--color-label); margin-bottom: 6px; }
+  .rate-value { font-size: 16px; font-weight: 700; color: var(--color-primary); }
+
+  /* Dropdown */
+  .dropdown-host { position: relative; }
+  .dropdown-overlay {
+    position: fixed; inset: 0; z-index: 10; background: transparent;
+  }
+  .dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-divider);
+    border-radius: 16px;
+    min-width: 280px;
+    max-height: 280px;
+    overflow-y: auto;
+    box-shadow: var(--dropdown-shadow);
+    z-index: 20;
+    padding: 4px 0;
+  }
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+  }
+  .dropdown-item:hover { background: #F9FAFB; }
+  .dropdown-item.selected .item-code { font-weight: 700; }
+  .item-flag { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--color-input-bg); }
+  .item-flag svg { width: 100%; height: 100%; display: block; }
+  .item-code { font-size: 15px; color: var(--color-primary); flex-shrink: 0; font-weight: 400; }
+  .item-name {
+    font-size: 13px; color: var(--color-label);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+</style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <h1 class="title">Currency Converter</h1>
+      <p class="subtitle">Check live rates, set rate alerts, receive notifications and more.</p>
+    </header>
+
+    <section class="card" aria-label="Currency conversion">
+
+      <!-- FROM ROW -->
+      <div class="row">
+        <div class="label">Amount</div>
+        <div class="controls">
+          <div class="dropdown-host">
+            <button class="trigger" id="from-trigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="flag-44 anim" id="from-flag"></span>
+              <span class="code anim" id="from-code">USD</span>
+              <svg class="chevron" id="from-chev" viewBox="0 0 16 16" fill="none">
+                <path d="M4 6 L8 10 L12 6" stroke="#1F2261" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <input type="text" inputmode="decimal" class="pill anim" id="amount-input" value="1,000.00">
+        </div>
+      </div>
+
+      <!-- DIVIDER + SWAP -->
+      <div class="divider-area">
+        <div class="divider"></div>
+        <button class="swap-btn" id="swap-btn" aria-label="Swap currencies">
+          <span class="swap-icon-wrap" id="swap-icon-wrap">
+            <svg width="15" height="20" viewBox="0 0 15 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8.51036 13.75C8.51036 14.0214 8.5987 14.2855 8.76205 14.5022C8.92539 14.719 9.15485 14.8767 9.41575 14.9516C9.67666 15.0264 9.95483 15.0143 10.2082 14.917C10.4616 14.8198 10.6765 14.6427 10.8204 14.4125L14.1804 11.0537C14.4125 10.8205 14.5462 10.5018 14.5462 10.1696C14.5462 9.83736 14.4125 9.51873 14.1804 9.28562C13.9472 9.05348 13.6285 8.91975 13.2962 8.91975C12.964 8.91975 12.6453 9.05348 12.4116 9.28625L11.0116 10.6862V1.25C11.0116 0.918479 10.8799 0.600537 10.6455 0.366117C10.4111 0.131696 10.0931 0 9.76161 0C9.43009 0 9.11215 0.131696 8.87772 0.366117C8.6433 0.600537 8.51161 0.918479 8.51161 1.25V13.75Z" fill="white"/>
+              <path d="M6.05036 6.25C6.05036 5.97858 5.96201 5.71453 5.79867 5.49775C5.63533 5.28098 5.40587 5.12326 5.14496 5.04844C4.88406 4.97361 4.60588 4.98574 4.35248 5.08299C4.09908 5.18024 3.88421 5.35733 3.74036 5.5875L0.38161 8.94625C0.149608 9.17956 0.0163612 9.49832 0.0163612 9.83045C0.0163612 10.1626 0.149608 10.4813 0.38161 10.7146C0.614836 10.9476 0.933484 11.0813 1.26565 11.0813C1.59781 11.0813 1.91646 10.9476 2.14971 10.7146L3.55036 9.31375V18.75C3.55036 19.0815 3.68206 19.3995 3.91648 19.6339C4.1509 19.8683 4.46884 20 4.80036 20C5.13188 20 5.44982 19.8683 5.68424 19.6339C5.91866 19.3995 6.05036 19.0815 6.05036 18.75V6.25Z" fill="white"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+      <div class="swap-spacer"></div>
+
+      <!-- TO ROW -->
+      <div class="row">
+        <div class="label">Converted Amount</div>
+        <div class="controls">
+          <div class="dropdown-host">
+            <button class="trigger" id="to-trigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="flag-44 anim" id="to-flag"></span>
+              <span class="code anim" id="to-code">SGD</span>
+              <svg class="chevron" id="to-chev" viewBox="0 0 16 16" fill="none">
+                <path d="M4 6 L8 10 L12 6" stroke="#1F2261" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <input type="text" class="pill anim" id="result-output" value="1,360.00" readonly>
+        </div>
+      </div>
+    </section>
+
+    <section class="rate">
+      <div class="rate-label">Indicative Exchange Rate</div>
+      <div class="rate-value" id="rate-value">1 USD = 1.3600 SGD</div>
+    </section>
+  </main>
+
+<script>
+  // --- Mock data (real backend will replace this) ---
+  const CURRENCIES = [
+    { code: 'USD', name: 'United States Dollar' },
+    { code: 'AED', name: 'UAE Dirham' },
+    { code: 'EUR', name: 'Euro' },
+    { code: 'GBP', name: 'British Pound Sterling' },
+    { code: 'JPY', name: 'Japanese Yen' },
+    { code: 'MYR', name: 'Malaysian Ringgit' },
+    { code: 'SGD', name: 'Singapore Dollar' },
+  ];
+  // All rates are relative to USD (matches Open Exchange Rates free plan)
+  const RATES = {
+    USD: 1.0, AED: 3.6725, EUR: 0.9210, GBP: 0.7850,
+    JPY: 152.34, MYR: 4.7250, SGD: 1.3600,
+  };
+
+  // Simple inline flag SVGs (just enough for the prototype)
+  const FLAGS = {
+    USD: `<svg viewBox='0 0 60 60'><circle cx='30' cy='30' r='30' fill='#B22234'/><rect x='0' y='12' width='60' height='4' fill='#fff'/><rect x='0' y='22' width='60' height='4' fill='#fff'/><rect x='0' y='32' width='60' height='4' fill='#fff'/><rect x='0' y='42' width='60' height='4' fill='#fff'/></svg>`,
+    AED: `<svg viewBox='0 0 60 60'><circle cx='30' cy='30' r='30' fill='#fff'/><rect x='0' y='10' width='60' height='14' fill='#00732F'/><rect x='0' y='38' width='60' height='14' fill='#000'/><rect x='0' y='0' width='18' height='60' fill='#FF0000'/></svg>`,
+    EUR: `<svg viewBox='0 0 60 60'><circle cx='30' cy='30' r='30' fill='#003399'/><circle cx='30' cy='30' r='10' fill='none' stroke='#FFCC00' stroke-width='1.5'/></svg>`,
+    GBP: `<svg viewBox='0 0 60 60'><circle cx='30' cy='30' r='30' fill='#012169'/><path d='M0 30 L60 30 M30 0 L30 60' stroke='#fff' stroke-width='6'/><path d='M0 30 L60 30 M30 0 L30 60' stroke='#C8102E' stroke-width='3'/></svg>`,
+    JPY: `<svg viewBox='0 0 60 60'><circle cx='30' cy='30' r='30' fill='#fff' stroke='#ddd' stroke-width='0.5'/><circle cx='30' cy='30' r='12' fill='#BC002D'/></svg>`,
+    MYR: `<svg viewBox='0 0 60 60'><circle cx='30' cy='30' r='30' fill='#CC0000'/><rect x='0' y='8' width='60' height='4' fill='#fff'/><rect x='0' y='18' width='60' height='4' fill='#fff'/><rect x='0' y='28' width='60' height='4' fill='#fff'/></svg>`,
+    SGD: `<svg viewBox='0 0 60 60'><circle cx='30' cy='30' r='30' fill='#EF3340'/><rect x='0' y='30' width='60' height='30' fill='#fff'/></svg>`,
+  };
+
+  const flagFor = code => FLAGS[code] || `<svg viewBox='0 0 60 60'><circle cx='30' cy='30' r='30' fill='#9CA3AF'/></svg>`;
+
+  // --- State ---
+  const state = { from: 'USD', to: 'SGD', amount: 1000 };
+  let isAnimating = false;
+
+  // --- Formatters ---
+  const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtRate = n => n.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  const parseAmount = s => {
+    const cleaned = String(s).replace(/,/g, '');
+    const n = parseFloat(cleaned);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  // --- Conversion (mirrors the formula the backend will use) ---
+  function convert(amount, from, to) {
+    return amount * (RATES[to] / RATES[from]);
+  }
+
+  // --- Render ---
+  function renderFlags() {
+    document.getElementById('from-flag').innerHTML = flagFor(state.from);
+    document.getElementById('to-flag').innerHTML = flagFor(state.to);
+    document.getElementById('from-code').textContent = state.from;
+    document.getElementById('to-code').textContent = state.to;
+  }
+
+  function renderResult() {
+    const result = convert(state.amount, state.from, state.to);
+    document.getElementById('result-output').value = fmt(result);
+    const indicative = convert(1, state.from, state.to);
+    document.getElementById('rate-value').textContent =
+      `1 ${state.from} = ${fmtRate(indicative)} ${state.to}`;
+  }
+
+  function renderAll() { renderFlags(); renderResult(); }
+
+  // --- Amount input formatting ---
+  const amountInput = document.getElementById('amount-input');
+  amountInput.addEventListener('input', e => {
+    const raw = e.target.value.replace(/[^0-9.]/g, '');
+    const n = parseAmount(raw);
+    state.amount = n;
+    // Reformat with commas while preserving decimal entry
+    const parts = raw.split('.');
+    const intPart = parts[0] ? parseInt(parts[0], 10).toLocaleString('en-US') : '0';
+    e.target.value = parts.length > 1 ? `${intPart}.${parts[1].slice(0, 2)}` : intPart;
+    renderResult();
+  });
+  amountInput.addEventListener('blur', e => {
+    e.target.value = fmt(state.amount);
+  });
+
+  // --- Swap with fade animation ---
+  document.getElementById('swap-btn').addEventListener('click', () => {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    const targets = ['from-flag', 'to-flag', 'from-code', 'to-code', 'amount-input', 'result-output'];
+    targets.forEach(id => document.getElementById(id).classList.add('fade-out'));
+
+    document.getElementById('swap-icon-wrap').classList.add('spin');
+
+    setTimeout(() => {
+      [state.from, state.to] = [state.to, state.from];
+      renderAll();
+      // Reflect new amount to keep UX symmetrical: result becomes the new input
+      amountInput.value = fmt(state.amount);
+      targets.forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove('fade-out');
+        el.classList.add('fade-in');
+      });
+    }, 300);
+
+    setTimeout(() => {
+      targets.forEach(id => document.getElementById(id).classList.remove('fade-in'));
+      document.getElementById('swap-icon-wrap').classList.remove('spin');
+      isAnimating = false;
+    }, 600);
+  });
+
+  // --- Dropdown ---
+  function buildDropdown(host, currentCode, onSelect) {
+    const overlay = document.createElement('div');
+    overlay.className = 'dropdown-overlay';
+
+    const panel = document.createElement('div');
+    panel.className = 'dropdown';
+    panel.setAttribute('role', 'listbox');
+
+    CURRENCIES.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'dropdown-item' + (c.code === currentCode ? ' selected' : '');
+      btn.innerHTML = `
+        <span class="item-flag">${flagFor(c.code)}</span>
+        <span class="item-code">${c.code}</span>
+        <span class="item-name">${c.name}</span>
+      `;
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        onSelect(c.code);
+        close();
+      });
+      panel.appendChild(btn);
+    });
+
+    function close() {
+      overlay.remove();
+      panel.remove();
+    }
+    overlay.addEventListener('click', close);
+
+    document.body.appendChild(overlay);
+    host.appendChild(panel);
+    return close;
+  }
+
+  function wireTrigger(triggerId, chevId, side) {
+    let close = null;
+    document.getElementById(triggerId).addEventListener('click', e => {
+      e.stopPropagation();
+      const chev = document.getElementById(chevId);
+      if (close) { close(); close = null; chev.classList.remove('open'); return; }
+      chev.classList.add('open');
+      const host = e.currentTarget.parentElement;
+      close = buildDropdown(host, state[side], code => {
+        state[side] = code;
+        renderAll();
+        chev.classList.remove('open');
+        close = null;
+      });
+    });
+  }
+
+  wireTrigger('from-trigger', 'from-chev', 'from');
+  wireTrigger('to-trigger', 'to-chev', 'to');
+
+  renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+.pill {
+  background: var(--pill-bg);
+  border: none;
+  border-radius: var(--pill-border-radius);
+  padding: var(--pill-padding-y) var(--pill-padding-x);
+  font-size: var(--font-size-amount);
+  font-weight: var(--font-weight-medium);
+
+  /* color-mix lets the text fade to transparent during swap while the pill
+   * background stays solid (--swap-content-opacity is animated by the parent). */
+  color: color-mix(
+    in srgb,
+    var(--color-text) calc(var(--swap-content-opacity, 1) * 100%),
+    transparent
+  );
+
+  text-align: right;
+  width: 100%;
+  font-family: var(--font-family);
+  outline: none;
+}
+
+.pill:read-only {
+  cursor: default;
+}
+
+.pill:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.pill::-webkit-outer-spin-button,
+.pill::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pill[type='number'] {
+  -moz-appearance: textfield;
+}
