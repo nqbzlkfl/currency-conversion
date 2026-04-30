@@ -6,6 +6,16 @@ A single-purpose currency converter web app: pick two currencies, type an amount
 
 ![Status](https://img.shields.io/badge/Node-22-green) ![Tests](https://img.shields.io/badge/tests-53%20passing-brightgreen) ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 
+## 🌐 Live URLs
+
+| What | URL |
+|------|-----|
+| **Frontend** (Firebase Hosting) | https://currency-conversion-9e2e5.web.app |
+| **Backend API** (Google Cloud Run) | https://currency-conversion-696403394356.asia-southeast1.run.app |
+| **Health check** | https://currency-conversion-696403394356.asia-southeast1.run.app/api/health |
+
+> Backend may take a few seconds to respond on the first request after idle (Cloud Run cold start with `min-instances=0` for free-tier cost optimisation). The frontend shows a loading indicator during this wait.
+
 ---
 
 ## Table of Contents
@@ -102,10 +112,12 @@ Selected at runtime via `APP_ENV={local|preprod|prod}` (set by npm scripts).
 
 ### Frontend env files (`client/env/.env.{local,preprod,prod}`)
 
-| Variable              | local     | preprod                                  | prod                                  |
-|-----------------------|-----------|------------------------------------------|---------------------------------------|
-| `VITE_USE_MOCK`       | false     | false                                    | false                                 |
-| `VITE_API_BASE_URL`   | `/api`    | `https://preprod-api.example.com/api`    | `https://api.example.com/api`         |
+| Variable              | local     | preprod                                          | prod                                             |
+|-----------------------|-----------|--------------------------------------------------|--------------------------------------------------|
+| `VITE_USE_MOCK`       | false     | false                                            | false                                            |
+| `VITE_API_BASE_URL`   | `/api`    | Cloud Run URL `+ /api`                           | Cloud Run URL `+ /api`                           |
+
+In production both `preprod` and `prod` point at the same Cloud Run service (`https://currency-conversion-696403394356.asia-southeast1.run.app/api`) — there's no separate preprod backend deployed.
 
 Selected via Vite's `--mode` flag (Vite reads from `client/env/` via the `envDir` config). `.env.local` is auto-loaded by Vite in every mode (gitignored).
 
@@ -429,7 +441,18 @@ The frontend ships as static files (`client/dist/`) to **Firebase Hosting** — 
 Backend → **Google Cloud Run** (deploys this Dockerfile from GitHub via Cloud Build).
 Frontend → **Firebase Hosting** (deploys `client/dist/` after `npm run build:prod`).
 
-> Detailed deployment walkthrough: TODO.
+| Layer | Provider | Live URL |
+|---|---|---|
+| Frontend | Firebase Hosting | https://currency-conversion-9e2e5.web.app |
+| Backend | Google Cloud Run (`asia-southeast1`) | https://currency-conversion-696403394356.asia-southeast1.run.app |
+
+**Frontend deploy** (from repo root, after editing `client/env/.env.prod` if needed):
+```bash
+cd client && npm run build:prod && cd ..
+firebase deploy --only hosting
+```
+
+**Backend deploy** is automatic via the Cloud Build trigger on every push to `main`. The trigger builds `server/Dockerfile`, pushes the image to Artifact Registry, and deploys a new Cloud Run revision. Environment variables (including `OXR_APP_ID`) are set on the Cloud Run service itself — never baked into the image.
 
 ---
 
