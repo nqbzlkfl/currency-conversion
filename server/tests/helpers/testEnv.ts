@@ -1,11 +1,3 @@
-/**
- * Common test setup utilities.
- *
- * Tests don't go through the real .env.{APP_ENV} loader — they set
- * process.env directly here, then reset the env cache so loadEnv()
- * picks up the test values.
- */
-
 import { _resetEnvForTesting } from '@/config/env';
 import { _resetInflightForTesting } from '@/services/oxr.service';
 import { cache } from '@/services/cache.service';

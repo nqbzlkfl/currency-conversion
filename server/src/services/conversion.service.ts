@@ -1,12 +1,6 @@
 import { ApiError } from '@/utils/ApiError';
 import { ERROR_CODES, HTTP_STATUS } from '@/helpers/constants';
 
-/**
- * Pure conversion math, no I/O. OXR free plan returns rates relative to USD,
- * so cross-currency conversion goes via USD as the implicit base:
- *   result = amount * (rates[to] / rates[from])
- */
-
 export type ConversionResult = {
   result: number;
   rate: number;

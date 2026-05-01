@@ -17,7 +17,6 @@ function bootstrap(): void {
     logger.info('Server started', {
       appEnv: env.appEnv,
       port: env.port,
-      // Never log the full App ID
       oxrAppIdSuffix: env.oxrAppId.slice(-4),
     });
   });

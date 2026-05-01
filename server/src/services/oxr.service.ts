@@ -9,8 +9,6 @@ import {
 } from '@/helpers/constants';
 import type { OxrCurrenciesResponse, OxrLatestResponse } from '@/types/oxr.types';
 
-/** OXR returns 401 when the App ID is invalid; we translate to 502 since
- * the client can't fix our config. See docs/02-backend-architecture.md §10.3. */
 const OXR_STATUS_UNAUTHORISED = 401;
 const OXR_STATUS_RATE_LIMIT = 429;
 

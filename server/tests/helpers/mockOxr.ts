@@ -1,8 +1,3 @@
-/**
- * Mock OXR upstream responses. Used by integration tests via
- * vi.spyOn(globalThis, 'fetch').
- */
-
 import type { OxrCurrenciesResponse, OxrLatestResponse } from '@/types/oxr.types';
 
 export const MOCK_LATEST: OxrLatestResponse = {
