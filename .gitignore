@@ -6,3 +6,6 @@
 firebase-debug.log*
 firebase-debug.*.log*
 .firebaserc.backup
+
+# Submission secrets — included in the ZIP, NEVER committed to git
+secrets.txt

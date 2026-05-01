@@ -492,9 +492,9 @@ cd server
 # Build the image
 docker build -t currency-converter-server .
 
-# Run it (replace OXR_APP_ID with your own for production)
+# Run it (replace OXR_APP_ID with your own — see secrets.txt in the repo root)
 docker run --rm -p 8080:8080 \
-  -e OXR_APP_ID=aa141bebf0c24253a6a89a9f9591c0d9 \
+  -e OXR_APP_ID=your-oxr-app-id-here \
   currency-converter-server
 
 # In another terminal — verify it's healthy
