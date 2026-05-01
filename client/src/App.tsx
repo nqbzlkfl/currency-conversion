@@ -14,7 +14,6 @@ import styles from './App.module.css';
 const PAGE_TITLE = 'Currency Converter';
 const PAGE_SUBTITLE =
   'Check live rates, set rate alerts, receive notifications and more.';
-const PAGE_SUBTITLE_LOADING = 'Loading latest rates';
 const CURRENCIES_ERROR_FALLBACK = 'Unable to load currencies. Please refresh.';
 const EMPTY_RESULT_DISPLAY = '';
 
@@ -108,16 +107,10 @@ export function App() {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>{PAGE_TITLE}</h1>
-        <p
-          className={`${styles.subtitle} ${
-            isInitialLoad ? styles.subtitleLoading : ''
-          }`}
-        >
+        <p className={`${styles.subtitle}`}>
           {showCurrenciesError
             ? CURRENCIES_ERROR_FALLBACK
-            : isInitialLoad
-              ? PAGE_SUBTITLE_LOADING
-              : PAGE_SUBTITLE}
+            : PAGE_SUBTITLE}
         </p>
       </header>
 

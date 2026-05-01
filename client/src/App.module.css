@@ -23,16 +23,6 @@
   line-height: var(--line-height-body);
 }
 
-.subtitleLoading::after {
-  content: '...';
-  display: inline-block;
-  width: 1.2em;
-  text-align: left;
-  letter-spacing: 0.08em;
-  animation: subtitleDots 1.4s steps(4, end) infinite;
-  margin-left: 2px;
-}
-
 @keyframes subtitleDots {
   0%   { content: ''; }
   25%  { content: '.'; }
