@@ -88,7 +88,7 @@ Open **http://localhost:5173** in your browser. The Vite dev server proxies `/ap
 ## 2. Project Structure
 
 ```
-currency-conversion-converter/
+currency-conversion/
 ├── .github/workflows/         CI workflows (GitHub Actions)
 ├── client/                    Vite + React + TS frontend
 │   ├── src/
@@ -217,6 +217,44 @@ All errors return:
 ## 5. Test Coverage
 
 **Total:** 53 tests passing (31 backend + 22 frontend). All run with `npm test`.
+
+### Latest test run
+
+Captured locally on macOS / Node 22 / Vitest 1.6.1:
+
+**Client (`cd client && npm test`):**
+
+```
+ RUN  v1.6.1 /Users/.../currency-conversion/client
+
+ ✓ tests/unit/helpers/currencyToCountry.test.ts (4)
+ ✓ tests/unit/services/mockData.test.ts (4)
+ ✓ tests/unit/helpers/format.test.ts (14)
+
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+   Duration  746ms
+```
+
+**Server (`cd server && npm test`):**
+
+```
+ RUN  v1.6.1 /Users/.../currency-conversion/server
+
+ ✓ tests/unit/cache.service.test.ts (6)
+ ✓ tests/unit/conversion.service.test.ts (7)
+ ✓ tests/integration/currencies.test.ts (3)
+ ✓ tests/integration/rates.test.ts (1)
+ ✓ tests/integration/notFound.test.ts (1)
+ ✓ tests/integration/health.test.ts (1)
+ ✓ tests/integration/convert.test.ts (12)
+
+ Test Files  7 passed (7)
+      Tests  31 passed (31)
+   Duration  390ms
+```
+
+> The `[error] Network error reaching OXR` lines occasionally seen in the server output are intentional — they come from `currencies.test.ts` and `convert.test.ts` deliberately simulating upstream failure to verify the 502 mapping logic. They are logger output from the test scenario, not actual failures.
 
 ### Backend tests — `server/tests/`
 
