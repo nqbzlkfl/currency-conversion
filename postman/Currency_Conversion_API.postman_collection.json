@@ -1,9 +1,9 @@
 {
   "info": {
-    "name": "Currency Converter API",
-    "description": "Currency Converter backend API. Proxies and caches Open Exchange Rates and exposes a typed JSON contract.\n\n**Setup:** Import one of the environment files alongside this collection:\n- `Local.postman_environment.json` — for `http://localhost:8800/api`\n- `Production.postman_environment.json` — for the deployed Cloud Run service\n\nSelect the active environment from the dropdown in the top-right of Postman, then run any request.",
+    "name": "Currency Conversion API",
+    "description": "Currency Conversion backend API. Proxies and caches Open Exchange Rates and exposes a typed JSON contract.\n\n**Setup:** Import one of the environment files alongside this collection:\n- `Local.postman_environment.json` — for `http://localhost:8800/api`\n- `Production.postman_environment.json` — for the deployed Cloud Run service\n\nSelect the active environment from the dropdown in the top-right of Postman, then run any request.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_postman_id": "cc-converter-api"
+    "_postman_id": "cc-conversion-api"
   },
   "item": [
     {
