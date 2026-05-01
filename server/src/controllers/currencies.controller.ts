@@ -2,11 +2,6 @@ import type { Request, Response, NextFunction } from 'express';
 import { oxrService } from '@/services/oxr.service';
 import type { CurrenciesResponse, Currency } from '@/types/api.types';
 
-/**
- * Returns the intersection of OXR currencies.json and latest.json rates,
- * sorted alphabetically. Ensures the frontend dropdown never lists a code
- * that would fail to convert.
- */
 export async function getCurrencies(
   _req: Request,
   res: Response<CurrenciesResponse>,

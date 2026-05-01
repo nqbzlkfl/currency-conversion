@@ -1,9 +1,3 @@
-/**
- * Loads and validates env vars. dotenv-cli already populated process.env
- * with the appropriate .env.{APP_ENV} file before this runs.
- * Fails fast at startup if OXR_APP_ID is missing.
- */
-
 const VALID_APP_ENVS = ['local', 'preprod', 'prod'] as const;
 type AppEnv = (typeof VALID_APP_ENVS)[number];
 

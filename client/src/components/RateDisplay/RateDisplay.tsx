@@ -18,9 +18,6 @@ export function RateDisplay({
   isInitialLoad = false,
 }: RateDisplayProps) {
   const hasRate = rate !== null && Number.isFinite(rate);
-
-  // Initial-load wins over "unavailable" so users see a loading affordance
-  // instead of a scary error message during the first cold-start fetch.
   const showLoading = isInitialLoad && !hasRate;
 
   const valueText = hasRate

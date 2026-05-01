@@ -108,8 +108,6 @@
   --dropdown-item-padding-x: 16px;
   --dropdown-item-gap: 12px;
 
-  /* Animation: fade is 300ms (out then in = 600ms total). Spin is 900ms,
-   * deliberately longer so content settles before the icon stops rotating. */
   --anim-fade-duration: 300ms;
   --anim-spin-duration: 900ms;
   --anim-easing: cubic-bezier(0.4, 0, 0.2, 1);

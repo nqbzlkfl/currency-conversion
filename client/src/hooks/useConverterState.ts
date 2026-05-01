@@ -12,8 +12,6 @@ export type ConverterState = {
   amount: number;
   amountInput: string;
   lastChangeWasCurrency: boolean;
-  /** Increments on every action so effects can re-fire after SWAP (where
-   * from/to exchange but the dependency *set* is unchanged). */
   epoch: number;
 };
 

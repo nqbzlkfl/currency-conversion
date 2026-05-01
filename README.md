@@ -38,6 +38,33 @@ A single-purpose currency converter web app: pick two currencies, type an amount
 
 **Prerequisites:** Node 22 (use `nvm use` — `.nvmrc` files are provided), npm 10+.
 
+### Option A — One-shot setup script (recommended)
+
+From the repo root:
+
+```bash
+chmod +x setup.sh   # first time only
+./setup.sh
+```
+
+The script:
+1. Verifies Node 22+ is installed
+2. Creates `server/env/.env.local` and `client/env/.env.local` from the templates
+3. Prompts you for an `OXR_APP_ID` ([sign up free](https://openexchangerates.org/signup/free))
+4. Runs `npm install` in both projects
+
+Then start each side in its own terminal:
+
+```bash
+# Terminal 1
+cd server && npm run dev    # → http://localhost:8800
+
+# Terminal 2
+cd client && npm run dev    # → http://localhost:5173
+```
+
+### Option B — Manual setup
+
 ```bash
 # 1. Backend (terminal 1)
 cd server
@@ -86,7 +113,7 @@ currency-conversion-converter/
 │   └── .env.{local,preprod,prod}
 │
 ├── docs/                      Architecture & spec documents (1–5)
-├── postman_collection.json    Importable Postman collection
+├── postman/                   Postman collection + Local/Production environments
 └── README.md                  ← you are here
 ```
 
@@ -326,12 +353,22 @@ cd client && npm run lint && npm test && npm run build:prod
 
 ## 7. Postman Collection
 
-A Postman collection is included at `postman_collection.json` covering all 4 endpoints plus 5 error scenarios (9 requests total).
+A Postman collection lives in `postman/`, with separate environment files for local and production. Together they cover all 4 endpoints plus 5 error scenarios (9 requests total).
+
+```
+postman/
+├── Currency_Converter_API.postman_collection.json   ← the collection
+├── Local.postman_environment.json                   ← base_url = localhost:8800/api
+└── Production.postman_environment.json              ← base_url = Cloud Run URL
+```
 
 **Import steps:**
-1. Open Postman → **Collections** → **Import** (top-left)
-2. Drop the `postman_collection.json` file in
-3. The collection variable `base_url` defaults to `http://localhost:8800/api` — edit it to point at preprod/prod when needed
+1. Open Postman → click **Import** (top-left)
+2. Drop **all three files** in at once — Postman imports the collection and both environments
+3. In the top-right environment dropdown, select **Local** or **Production**
+4. Run any request — `{{base_url}}` resolves from the active environment
+
+To switch environments, just change the dropdown — no edits needed to the collection or requests.
 
 **Included requests:**
 

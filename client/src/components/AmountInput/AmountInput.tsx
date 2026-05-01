@@ -9,10 +9,6 @@ type AmountInputProps = {
   ariaLabel?: string;
 };
 
-/**
- * Decimal text input. Always renders a 2dp value when not focused; on
- * focus the parent's raw value passes through so mid-typing edits work.
- */
 export const AmountInput = forwardRef<HTMLInputElement, AmountInputProps>(
   function AmountInput({ value, readOnly = false, onValueChange, ariaLabel }, ref) {
     const [isFocused, setIsFocused] = useState(false);

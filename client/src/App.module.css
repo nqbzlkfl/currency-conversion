@@ -23,9 +23,6 @@
   line-height: var(--line-height-body);
 }
 
-/* Initial-load only: appends an animated "..." after the subtitle text
- * to signal "rates are loading" without changing layout height.
- * Each dot fades in 400ms apart, then the cycle repeats every 1.4s. */
 .subtitleLoading::after {
   content: '...';
   display: inline-block;
@@ -44,8 +41,6 @@
   100% { content: ''; }
 }
 
-/* Tablet & desktop: vertically center the card on the viewport.
- * Mobile retains the top-aligned layout. */
 @media (min-width: 768px) {
   .page {
     min-height: 100vh;

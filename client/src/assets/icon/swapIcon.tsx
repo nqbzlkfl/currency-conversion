@@ -1,9 +1,3 @@
-/**
- * Custom swap icon from the Figma design system.
- * Two staggered arrows: up-right and down-left.
- *
- * Source: uiux_guideline.md §6
- */
 export function SwapIcon() {
   return (
     <svg

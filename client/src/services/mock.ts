@@ -1,11 +1,3 @@
-/**
- * Mock data used when VITE_USE_MOCK=true.
- *
- * Mirrors the prototype's hardcoded RATES table so the frontend can run
- * before the backend exists. All rates are USD-based (matches the OXR
- * free-plan contract that the real backend will use).
- */
-
 import type {
   ConvertResponse,
   CurrenciesResponse,
@@ -15,7 +7,6 @@ import { CURRENCY_CODE_LENGTH } from '@/helpers/constants';
 
 const MOCK_BASE = 'USD';
 
-/** Static currency list — a representative subset, alphabetised by code. */
 export const MOCK_CURRENCIES: CurrenciesResponse = {
   currencies: [
     { code: 'AED', name: 'United Arab Emirates Dirham' },
@@ -39,7 +30,6 @@ export const MOCK_CURRENCIES: CurrenciesResponse = {
   ],
 };
 
-/** Static rate table relative to USD. Matches the prototype values. */
 const MOCK_RATES: Record<string, number> = {
   AED: 3.6725,
   AUD: 1.5240,
@@ -71,10 +61,6 @@ export function getMockRates(): RatesResponse {
   };
 }
 
-/**
- * Compute a mock conversion using the static rate table.
- * Mirrors the formula the real backend will use.
- */
 export function getMockConversion(
   from: string,
   to: string,

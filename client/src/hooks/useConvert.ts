@@ -14,8 +14,6 @@ export type UseConvertResult = {
 
 type UseConvertOptions = {
   immediate?: boolean;
-  /** Increments on every state change so this hook re-fires after a SWAP
-   * (where from/to swap values but the dependency set doesn't change). */
   epoch?: number;
 };
 

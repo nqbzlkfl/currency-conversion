@@ -24,8 +24,7 @@
   position: relative;
 }
 
-/* Animates --swap-content-opacity over 600ms (300ms out, 300ms in).
- * Descendants reading this var fade; pill bg, chevron, label stay solid. */
+/* Animates --swap-content-opacity over 600ms (300ms out, 300ms in).*/
 .fadingControls {
   animation: rowSwapFade calc(var(--anim-fade-duration) * 2) ease forwards;
 }

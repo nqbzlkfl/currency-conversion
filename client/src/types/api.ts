@@ -1,7 +1,3 @@
-/**
- * API contract types — must match `02-backend-architecture.md` §5.
- */
-
 export type Currency = {
   code: string;
   name: string;
@@ -32,7 +28,6 @@ export type ApiErrorResponse = {
   message: string;
 };
 
-/** Frontend-side Error class for failures originating from the API layer. */
 export class ApiError extends Error {
   constructor(
     public readonly code: string,

@@ -6,9 +6,6 @@
   transition: opacity 400ms ease;
 }
 
-/* Initial-load only: card breathes gently to communicate "data loading"
- * without being distracting. Disables itself once data arrives — the
- * transition: opacity above smooths the return to full opacity. */
 .cardLoading {
   animation: cardBreathe 1.6s ease-in-out infinite;
 }

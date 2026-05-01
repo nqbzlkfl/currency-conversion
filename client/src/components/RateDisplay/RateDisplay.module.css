@@ -15,8 +15,6 @@
   color: var(--color-text);
 }
 
-/* Initial-load only: shows animated dots after "Loading exchange rate"
- * to match the subtitle treatment. Same 1.4s cycle keeps the two in sync. */
 .valueLoading {
   color: var(--color-label);
   font-weight: var(--font-weight-regular);

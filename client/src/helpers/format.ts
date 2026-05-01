@@ -28,11 +28,6 @@ export function parseAmount(input: string): number {
   return parsed;
 }
 
-/**
- * Format a partially-typed amount for the input field. Inserts thousand
- * separators on the integer part while preserving in-progress decimal
- * input. Truncates (does not round) decimals beyond AMOUNT_DECIMAL_PLACES.
- */
 export function formatAmountInput(rawInput: string): string {
   const sanitised = rawInput.replace(/[^0-9.]/g, '');
   if (!sanitised) return '';

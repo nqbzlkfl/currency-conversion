@@ -1,4 +1,4 @@
-import { SwapIcon } from './SwapIcon';
+import { SwapIcon } from '@/assets/icon';
 import styles from './SwapButton.module.css';
 
 type SwapButtonProps = {

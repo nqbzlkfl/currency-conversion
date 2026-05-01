@@ -5,9 +5,6 @@
   padding: var(--pill-padding-y) var(--pill-padding-x);
   font-size: var(--font-size-amount);
   font-weight: var(--font-weight-medium);
-
-  /* color-mix lets the text fade to transparent during swap while the pill
-   * background stays solid (--swap-content-opacity is animated by the parent). */
   color: color-mix(
     in srgb,
     var(--color-text) calc(var(--swap-content-opacity, 1) * 100%),

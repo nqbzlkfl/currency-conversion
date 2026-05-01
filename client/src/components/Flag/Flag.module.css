@@ -11,10 +11,6 @@
   box-sizing: border-box;
 }
 
-/* react-country-flag renders an <img> with inline 1em sizing — !important
- * is required to override the library's inline styles. opacity here also
- * isolates the swap fade to artwork only; the badge frame (border + bg)
- * stays solid. */
 .flag :global(img) {
   width: 100% !important;
   height: 100% !important;

@@ -14,5 +14,4 @@ export const CACHE_KEYS = {
   currencies: 'oxr:currencies',
 } as const;
 
-/** OXR free plan returns rates relative to USD only. */
 export const OXR_BASE_CURRENCY = 'USD';

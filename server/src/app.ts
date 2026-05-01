@@ -6,10 +6,6 @@ import { notFoundHandler } from '@/middleware/notFound';
 import { API_PREFIX } from '@/helpers/constants';
 import { loadEnv } from '@/config/env';
 
-/**
- * Express app factory. Separated from server.ts (which calls .listen)
- * so integration tests can use supertest against the in-memory app.
- */
 export function createApp(): Express {
   const env = loadEnv();
   const app = express();
