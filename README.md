@@ -523,11 +523,12 @@ The session opened by uploading the assignment PDF, the OXR API guide, the UI/UX
 
 > *"Act as a senior full-stack developer with 10+ years of experience. If you don't know something, say so clearly. Always ask questions or propose changes before proceeding. Don't over-engineer or add anything not explicitly requested."*
 
-Before any code was written, the assistant proposed an architecture and asked for confirmation on every major decision. The following were locked:
+Before any code was written, the assistant proposed an architecture and asked for confirmation on every major decision. The user explicitly asked for **a full architecture proposal covering both backend and frontend** — folder structure, component hierarchy, data flow, state model, error contract — before any implementation. The following were locked:
 
 - **Stack:** Vite + React 18 + TS (frontend), Node 22 + Express 4 + TS (backend), separate folders (no monorepo), in-memory `Map` cache (no Redis/sqlite), zero unnecessary deps.
+- **End-to-end flow agreed up front:** App load → `GET /api/currencies` → populate dropdowns → user types or selects → debounced `GET /api/convert` → render result + indicative rate. Swap flow: animate cross-fade and 180° spin, then re-fetch. Every state transition mapped before writing the reducer.
 - **Bonuses included:** `/rates` endpoint, integration tests. Docker added later as a scope addition.
-- **Custom rule from user:** "No hardcoded colors or magic numbers. Visual values go in `tokens.css`, behavior values go in `helpers/constants/`. Use `@/*` path alias."
+- **Custom rule from user:** "No hardcoded colors or magic numbers. Visual values go in `theme.css` (CSS custom properties), behavior values go in `helpers/constants/`. Use `@/*` path alias."
 - **Three environments:** local, preprod, prod — selected via `APP_ENV` (backend) and Vite `--mode` (frontend), `dotenv-cli` for backend env loading. Env files live in `env/` on each side; only `env/.env.example` committed.
 
 ### Phase 2 — Documentation first
@@ -536,9 +537,9 @@ Before writing any source code, the assistant produced five design documents (`0
 
 ### Phase 3 — Frontend implementation
 
-> *"Build the prototype as a single HTML file first so I can validate the design before we commit to the React structure."*
+> *"Build a mock SVG design first — a single HTML file that I can open in a browser and validate the design against the Figma source before we commit to the React structure."*
 
-The assistant produced a working single-file HTML prototype with hardcoded rates, then ported the structure into the proper Vite/React/TS project. Each component got its own folder with a co-located `.module.css` file. Animation timings were extracted into `tokens.css`; behaviour constants into `helpers/constants/`.
+The user explicitly asked for a **visual mockup deliverable** — a self-contained HTML prototype with hardcoded data — to validate the design end-to-end before any React or component decomposition. The assistant produced `docs/currency-converter-prototype.html`: a single file containing the complete card layout, custom dropdown, swap animation, divider, indicative rate display, and **inline SVG shapes for both the swap-button arrow icon and placeholder country flags**. This let the user verify spacing, animation timing, dropdown behaviour, gradient background, and overall layout before writing any React. Once approved, the structure was ported into the proper Vite/React/TS project, components decomposed into `ConverterCard`, `CurrencyRow`, `CurrencySelector`, `CurrencyDropdown`, `AmountInput`, `SwapButton`, `RateDisplay`, and `Flag`. The placeholder flag SVGs were swapped for `react-country-flag`. Each component got its own folder with a co-located `.module.css` file. Animation timings were extracted into `theme.css`; behaviour constants into `helpers/constants/`.
 
 #### Notable iterations:
 - **Flag rendering bug** went through three rounds. The user kept screenshotting "still doesn't fill the circle." First two rounds the assistant guessed at `object-fit: cover` and `transform: scale(1.5)` without checking the actual DOM. Third round the assistant finally read `react-country-flag/src/index.tsx` and discovered: it renders an `<img>` (not `<svg>`) sourced from a CDN, with inline `width: 1em; height: 1em`. Fix was a `:global(img)` selector with `!important` to override the inline styles. **Lesson reinforced:** inspect the actual library output before guessing.
