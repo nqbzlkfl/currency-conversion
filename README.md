@@ -96,7 +96,7 @@ currency-conversion-converter/
 │   │   ├── hooks/             useConvert, useCurrencies, useSwapAnimation
 │   │   ├── helpers/           constants/, format.ts, currencyToCountry.ts
 │   │   ├── services/          api.ts (fetch wrapper), mockData.ts
-│   │   ├── styles/            tokens.css, reset.css, global.css
+│   │   ├── styles/            theme.css, base.css, global.css
 │   │   └── types/             api.ts (mirrors server contract)
 │   └── .env.{local,preprod,prod}
 │

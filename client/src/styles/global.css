@@ -1,12 +1,16 @@
-body {
-  font-family: var(--font-family);
-  color: var(--color-primary);
+html {
   background-color: var(--color-bg);
   background-image: radial-gradient(
     ellipse at top left,
     var(--bg-gradient-start) 0%,
     var(--bg-gradient-mid) 65%
   );
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  color: var(--color-primary);
   min-height: 100vh;
 }
 

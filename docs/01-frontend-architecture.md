@@ -67,7 +67,7 @@ client/
 │   │   └── currencyToCountry.ts   Currency code → ISO-3166 alpha-2 mapping
 │   ├── styles/
 │   │   ├── tokens.css             CSS variables from uiux_guideline.md §9
-│   │   └── reset.css              Minimal reset
+│   │   └── base.css              Minimal browser reset (box-sizing, body height, font inheritance)
 │   ├── App.tsx
 │   └── main.tsx
 ├── index.html
